@@ -85,6 +85,16 @@ describe('connectedByokPickerModels', () => {
     expect(catalogHas('anthropic', anthropic!.id.slice('anthropic/'.length))).toBe(true);
   });
 
+  test('treats Bedrock bearer+region as connected (not only catalog env[0])', () => {
+    const models = connectedByokPickerModels(
+      new Set(['AWS_BEARER_TOKEN_BEDROCK', 'AWS_REGION']),
+    );
+    const bedrock = models.find((m) => m.provider === 'amazon-bedrock');
+    expect(bedrock).toBeTruthy();
+    expect(bedrock!.id.startsWith('amazon-bedrock/')).toBe(true);
+    expect(catalogHas('amazon-bedrock', bedrock!.id.slice('amazon-bedrock/'.length))).toBe(true);
+  });
+
   test('no connected providers → no BYOK entries', () => {
     expect(connectedByokPickerModels(new Set())).toEqual([]);
   });
@@ -138,5 +148,18 @@ describe('projectPickerCatalog', () => {
     };
 
     expect(Object.keys(projectPickerCatalog(full, new Set(), []))).toEqual([]);
+  });
+
+  test('includes Bedrock models when bearer+region secrets are connected', () => {
+    const full = {
+      'amazon-bedrock/claude-a': { name: 'Claude A' },
+      'openai/gpt-a': { name: 'GPT A' },
+    };
+
+    expect(
+      projectPickerCatalog(full, new Set(['AWS_BEARER_TOKEN_BEDROCK', 'AWS_REGION']), []),
+    ).toEqual({
+      'amazon-bedrock/claude-a': full['amazon-bedrock/claude-a'],
+    });
   });
 });
