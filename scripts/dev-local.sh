@@ -54,7 +54,11 @@ load_local_env() {
     for _f in apps/api/.env apps/web/.env; do
       _env="$("$DOTENVX" get --format eval -f "$ROOT_DIR/$_f" 2>/dev/null || true)"
       if [[ -z "$_env" || "$_env" == *'="encrypted:'* ]]; then
-        echo "[dev] ⚠️  could not decrypt $_f — run 'dotenvx-armor login' (or restore its .env.keys)" >&2
+        if [[ -f "$ROOT_DIR/apps/api/.env.local" || -f "$ROOT_DIR/apps/web/.env.local" ]]; then
+          echo "[dev] skipping encrypted $_f (using .env.local — Dotenv Armor unused)" >&2
+        else
+          echo "[dev] ⚠️  could not decrypt $_f — run 'dotenvx-armor login' (or restore its .env.keys)" >&2
+        fi
       else
         set -a; eval "$_env"; set +a
       fi
@@ -133,12 +137,12 @@ ensure_dev_tunnel() {
   fi
 
   # Non-cloud providers run on this machine — no public callback needed.
-  # Honor an explicit opt-out too.
-  if [[ "${KORTIX_DEV_TUNNEL:-auto}" == "0" || ( "$default_provider" != "daytona" && "$default_provider" != "platinum" ) ]]; then
+  # Honor an explicit opt-out too. E2B is cloud (same callback need as Daytona/Platinum).
+  if [[ "${KORTIX_DEV_TUNNEL:-auto}" == "0" || ( "$default_provider" != "daytona" && "$default_provider" != "platinum" && "$default_provider" != "e2b" ) ]]; then
     export KORTIX_URL="$api_origin"
     echo "[dev] Tunnel skipped — KORTIX_URL=$KORTIX_URL"
-    if [[ "$default_provider" == "daytona" ]]; then
-      echo "[dev] ⚠️  Default sandbox provider is Daytona (cloud) but the tunnel is off —"
+    if [[ "$default_provider" == "daytona" || "$default_provider" == "platinum" || "$default_provider" == "e2b" ]]; then
+      echo "[dev] ⚠️  Default sandbox provider is $default_provider (cloud) but the tunnel is off —"
       echo "[dev]     sessions will fail with 'OpenCode runtime is not ready' because the"
       echo "[dev]     sandbox cannot reach $api_origin. Unset KORTIX_DEV_TUNNEL to enable it."
     fi
@@ -146,7 +150,7 @@ ensure_dev_tunnel() {
   fi
 
   if ! command -v cloudflared >/dev/null 2>&1; then
-    echo "[dev] ERROR: cloudflared is required for cloud (Daytona) sandboxes but was not found."
+    echo "[dev] ERROR: cloudflared is required for cloud (Daytona/Platinum/E2B) sandboxes but was not found."
     echo "[dev]        Cloud sandboxes can't reach localhost; they need a public KORTIX_URL."
     echo "[dev]        Install:  brew install cloudflared"
     echo "[dev]        Or:       KORTIX_DEV_TUNNEL=0 pnpm dev   (skips the tunnel — cloud sandboxes won't reach localhost)"

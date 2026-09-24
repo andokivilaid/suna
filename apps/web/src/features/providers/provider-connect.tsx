@@ -202,6 +202,9 @@ export interface ProviderConnectViewProps {
   canWrite: boolean;
   search: string;
   onSearchChange: (value: string) => void;
+  /** True until focus — blocks silent email injection into the search box. */
+  searchReadOnly?: boolean;
+  onSearchFocus?: () => void;
   /** Remove a stored key. The host confirms first — this only asks. */
   onRemoveKey?: (providerId: string) => void;
   /** Per-provider extra auth affordance. Only `openai` has one today. */
@@ -682,6 +685,8 @@ export function ProviderConnectView({
   canWrite,
   search,
   onSearchChange,
+  searchReadOnly = false,
+  onSearchFocus,
   subscriptionSlots,
   accessSlots,
   pooledSlots,
@@ -698,15 +703,35 @@ export function ProviderConnectView({
           <Search />
         </InputGroupSearchIcon>
         <InputGroupSearchInput
-          type="text"
+          type="search"
           // The count is the list's own size, stated where you would narrow
           // it. Every one of those providers is rendered below.
           placeholder={tI18nComplete('textbcace0f3244e', { value0: totalCount })}
+          // Password managers / Chrome form-fill treat this screen as a login
+          // form (API-key fields below are `type="password"`) and inject the
+          // account email into the first text input — this search. Same
+          // opt-outs as the key fields; `readOnly` until focus is the reliable
+          // Chrome stop for silent username injection.
+          name="provider-catalogue-search"
           autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          data-1p-ignore=""
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          readOnly={searchReadOnly}
+          onFocus={onSearchFocus}
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
         />
-        <InputGroupSearchClear onClick={() => onSearchChange('')} />
+        {/* Always show Clear when the field has text — silent form-fill can
+            populate without focus, and `peer-focus:opacity-100` alone left
+            users stuck with an email they could not dismiss. */}
+        <InputGroupSearchClear
+          className={search ? 'opacity-100' : undefined}
+          onClick={() => onSearchChange('')}
+        />
       </InputGroupSearch>
 
       {/* The one sentence on the screen. With no Connect button, this is the
@@ -890,6 +915,21 @@ export function ProviderConnect({
   const [savedValues, setSavedValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [search, setSearch] = useState('');
+  // Chrome (and some extensions) treat this page as a login form because
+  // provider key fields are `type="password"`, then inject the account email
+  // into the first text input — this search — even when the user never typed
+  // it and has "autofill" off in the password-manager sense. Nothing in app
+  // code sets `search` to an email; rejecting email-shaped values and keeping
+  // the field read-only until focus stops that loop from sticking the UI on
+  // "No provider matches <email>".
+  const [searchEditable, setSearchEditable] = useState(false);
+  const setProviderSearch = (value: string) => {
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+      setSearch('');
+      return;
+    }
+    setSearch(value);
+  };
   const [removeId, setRemoveId] = useState<string | null>(null);
   // The connect we are waiting on. The VISIBLE pending flag is DERIVED from it
   // below rather than cleared from inside an effect — that synchronous
@@ -1193,7 +1233,9 @@ export function ProviderConnect({
         onRemoveKey={canWrite ? setRemoveId : undefined}
         canWrite={canWrite}
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={setProviderSearch}
+        searchReadOnly={!searchEditable}
+        onSearchFocus={() => setSearchEditable(true)}
         subscriptionSlots={
           pooledSecretsEnabled && accountId ? {
             openai: <div className="space-y-2">
