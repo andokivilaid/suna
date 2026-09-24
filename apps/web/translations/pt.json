@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "Não foi possível renderizar este diagrama",
       "text91aec62280a3": "Baixar SVG",
       "text751dfdcf3878": "Linha {value0}",
-      "text0a7b76552107": "Conta do conector renomeada"
+      "text0a7b76552107": "Conta do conector renomeada",
+      "textdcb3e1c00e79": "Conhecimento",
+      "texte221a3eb6342": "conhecimento documentos envios pdf arquivos"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "Pronto. Voltar ao app Kortix"
+  },
+  "knowledge": {
+    "title": "Conhecimento",
+    "description": "Documentos que seus agentes podem ler. Cada arquivo é commitado em .kortix/knowledge/ e toda sessão recebe uma cópia.",
+    "upload": "Enviar",
+    "uploadDocuments": "Enviar documentos",
+    "searchPlaceholder": "Pesquisar documentos",
+    "usage": "{count, plural, one {# documento} other {# documentos}} · {used} de {limit}",
+    "dropTitle": "Solte arquivos aqui ou clique para escolher",
+    "dropHint": "Até {maxFiles} arquivos, {maxFileSize} cada. PDF, Word, Excel, Markdown, CSV e mais.",
+    "emptyTitle": "Nenhum documento ainda",
+    "emptyDescription": "Envie contratos, especificações, relatórios ou notas. Os agentes os encontram por meio de .kortix/knowledge/INDEX.md.",
+    "noMatch": "Nenhum documento corresponde a “{query}”.",
+    "loadError": "Não foi possível carregar o conhecimento",
+    "retry": "Tentar novamente",
+    "noAccessTitle": "Você não pode ver o conhecimento",
+    "noAccessDescription": "Ler documentos do projeto exige acesso a arquivos neste projeto. Peça a um gerente do projeto.",
+    "actions": "Ações para {name}",
+    "download": "Baixar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "cancel": "Cancelar",
+    "uploadModal": {
+      "title": "Enviar {count, plural, one {# documento} other {# documentos}}",
+      "description": "Os arquivos chegam à branch padrão em um único commit. Os agentes os veem na próxima sessão.",
+      "folder": "Pasta",
+      "folderPlaceholder": "contratos",
+      "folderHint": "Opcional. Uma pasta dentro de .kortix/knowledge/",
+      "descriptionLabel": "Descrição",
+      "descriptionPlaceholder": "O que há neste documento?",
+      "descriptionHint": "Opcional. Uma linha no INDEX.md, aplicada a cada arquivo acima.",
+      "replace": "Substituir documentos que já existem",
+      "submit": "Enviar",
+      "removeFile": "Remover {name}",
+      "tooMany": "Escolha no máximo {max} arquivos.",
+      "tooLarge": "{name} excede o limite de {limit} por arquivo.",
+      "uploadTooLarge": "Um envio deve ter {limit} ou menos.",
+      "projectFull": "Isso excederia o limite de conhecimento de {limit}. Exclua documentos primeiro."
+    },
+    "editModal": {
+      "title": "Editar documento",
+      "description": "As alterações chegam à branch padrão em um único commit.",
+      "path": "Caminho",
+      "pathHint": "Relativo a .kortix/knowledge/ Altere-o para mover o arquivo.",
+      "save": "Salvar"
+    },
+    "deleteDialog": {
+      "title": "Excluir {name}?",
+      "description": "Isso remove o arquivo e sua linha no INDEX.md em um único commit na branch padrão. O histórico do Git mantém as versões anteriores.",
+      "confirm": "Excluir"
+    },
+    "toast": {
+      "uploaded": "{count, plural, one {# documento enviado} other {# documentos enviados}}",
+      "updated": "Documento atualizado",
+      "deleted": "Documento excluído",
+      "downloadFailed": "Não foi possível baixar {name}"
+    }
   }
 }

@@ -738,6 +738,18 @@ export function createKortix(config: KortixPlatformConfig, opts?: { global?: boo
           P.getProjectFileHistory(projectId, ...a),
       },
 
+      /** Documents in `.kortix/knowledge/` — one commit per write, INDEX.md kept in sync. */
+      knowledge: {
+        list: () => P.listProjectKnowledge(projectId),
+        upload: (...a: DropFirst<Parameters<typeof P.uploadProjectKnowledge>>) =>
+          P.uploadProjectKnowledge(projectId, ...a),
+        update: (...a: DropFirst<Parameters<typeof P.updateProjectKnowledgeFile>>) =>
+          P.updateProjectKnowledgeFile(projectId, ...a),
+        remove: (path: string) => P.deleteProjectKnowledgeFile(projectId, path),
+        download: (...a: DropFirst<Parameters<typeof P.downloadProjectKnowledgeFile>>) =>
+          P.downloadProjectKnowledgeFile(projectId, ...a),
+      },
+
       git: {
         commits: () => P.listProjectCommits(projectId),
         commit: (sha: string) => P.getProjectCommit(projectId, sha),

@@ -443,6 +443,28 @@ running session, use the session's file operations — see
 | `search(query)` | search the repo |
 | `archive(options?)` · `history(path)` | download a tarball · a file's git history |
 
+#### `p.knowledge` — project documents
+
+Documents in the project's `.kortix/knowledge/` folder. Every session clones
+the repository, so an uploaded document is on disk in the next session. Each
+write is one commit on the default branch that also regenerates
+`.kortix/knowledge/INDEX.md`. Reads need `project.file.read`; writes need
+`project.file.write`. Limits come back from `list()` as `limits`: 25 MiB per
+file, 10 files and 50 MiB per upload, 200 MiB per project.
+
+| method | what |
+| --- | --- |
+| `list()` | every document with `path`, `type`, `size`, `description` · `total_bytes` · `limits` |
+| `upload(files, { folder?, description?, replace? })` | commit one or more `File`s · `409` when a path exists and `replace` is not set · `413` over a limit |
+| `update({ path, newPath?, description? })` | move a document, change its description, or both |
+| `remove(path)` · `download(path)` | delete a document and its index line · the exact bytes as a `Blob` |
+
+```ts
+const p = kortix.project(projectId);
+await p.knowledge.upload(file, { folder: 'contracts', description: 'Signed MSA' });
+const { files } = await p.knowledge.list();
+```
+
 #### `p.git` — history
 
 | method | what |

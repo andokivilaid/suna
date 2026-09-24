@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "Dieses Diagramm konnte nicht gerendert werden",
       "text91aec62280a3": "SVG herunterladen",
       "text751dfdcf3878": "Zeile {value0}",
-      "text0a7b76552107": "Connector-Konto umbenannt"
+      "text0a7b76552107": "Connector-Konto umbenannt",
+      "textdcb3e1c00e79": "Wissen",
+      "texte221a3eb6342": "Wissen Dokumente Uploads PDF Unterlagen"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "Fertig. Zurück zur Kortix-App"
+  },
+  "knowledge": {
+    "title": "Wissen",
+    "description": "Dokumente, die deine Agenten lesen können. Jede Datei wird in .kortix/knowledge/ committet und jede Sitzung erhält eine Kopie.",
+    "upload": "Hochladen",
+    "uploadDocuments": "Dokumente hochladen",
+    "searchPlaceholder": "Dokumente durchsuchen",
+    "usage": "{count, plural, one {# Dokument} other {# Dokumente}} · {used} von {limit}",
+    "dropTitle": "Dateien hier ablegen oder zum Auswählen klicken",
+    "dropHint": "Bis zu {maxFiles} Dateien, je {maxFileSize}. PDF, Word, Excel, Markdown, CSV und mehr.",
+    "emptyTitle": "Noch keine Dokumente",
+    "emptyDescription": "Lade Verträge, Spezifikationen, Berichte oder Notizen hoch. Agenten finden sie über .kortix/knowledge/INDEX.md.",
+    "noMatch": "Keine Dokumente passen zu „{query}“.",
+    "loadError": "Wissen konnte nicht geladen werden",
+    "retry": "Erneut versuchen",
+    "noAccessTitle": "Du kannst das Wissen nicht ansehen",
+    "noAccessDescription": "Zum Lesen von Projektdokumenten brauchst du Dateizugriff in diesem Projekt. Frag eine Projektleitung.",
+    "actions": "Aktionen für {name}",
+    "download": "Herunterladen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "uploadModal": {
+      "title": "{count, plural, one {# Dokument} other {# Dokumente}} hochladen",
+      "description": "Die Dateien landen in einem Commit auf dem Standard-Branch. Agenten sehen sie in ihrer nächsten Sitzung.",
+      "folder": "Ordner",
+      "folderPlaceholder": "vertraege",
+      "folderHint": "Optional. Ein Ordner in .kortix/knowledge/",
+      "descriptionLabel": "Beschreibung",
+      "descriptionPlaceholder": "Was steht in diesem Dokument?",
+      "descriptionHint": "Optional. Eine Zeile in INDEX.md, gilt für jede Datei oben.",
+      "replace": "Vorhandene Dokumente ersetzen",
+      "submit": "Hochladen",
+      "removeFile": "{name} entfernen",
+      "tooMany": "Wähle höchstens {max} Dateien.",
+      "tooLarge": "{name} überschreitet das Dateilimit von {limit}.",
+      "uploadTooLarge": "Ein Upload darf höchstens {limit} groß sein.",
+      "projectFull": "Damit würde das Wissenslimit von {limit} überschritten. Lösche zuerst Dokumente."
+    },
+    "editModal": {
+      "title": "Dokument bearbeiten",
+      "description": "Änderungen landen in einem Commit auf dem Standard-Branch.",
+      "path": "Pfad",
+      "pathHint": "Relativ zu .kortix/knowledge/ Ändere ihn, um die Datei zu verschieben.",
+      "save": "Speichern"
+    },
+    "deleteDialog": {
+      "title": "{name} löschen?",
+      "description": "Dadurch werden die Datei und ihre Zeile in INDEX.md in einem Commit auf dem Standard-Branch entfernt. Die Git-Historie behält frühere Versionen.",
+      "confirm": "Löschen"
+    },
+    "toast": {
+      "uploaded": "{count, plural, one {# Dokument hochgeladen} other {# Dokumente hochgeladen}}",
+      "updated": "Dokument aktualisiert",
+      "deleted": "Dokument gelöscht",
+      "downloadFailed": "{name} konnte nicht heruntergeladen werden"
+    }
   }
 }

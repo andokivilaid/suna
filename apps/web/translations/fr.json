@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "Impossible d'afficher ce diagramme",
       "text91aec62280a3": "Télécharger le SVG",
       "text751dfdcf3878": "Ligne {value0}",
-      "text0a7b76552107": "Compte de connecteur renommé"
+      "text0a7b76552107": "Compte de connecteur renommé",
+      "textdcb3e1c00e79": "Connaissances",
+      "texte221a3eb6342": "connaissances documents imports pdf fichiers"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "Terminé. Retour à l’app Kortix"
+  },
+  "knowledge": {
+    "title": "Connaissances",
+    "description": "Documents que vos agents peuvent lire. Chaque fichier est commité dans .kortix/knowledge/ et chaque session en reçoit une copie.",
+    "upload": "Importer",
+    "uploadDocuments": "Importer des documents",
+    "searchPlaceholder": "Rechercher des documents",
+    "usage": "{count, plural, one {# document} other {# documents}} · {used} sur {limit}",
+    "dropTitle": "Déposez des fichiers ici ou cliquez pour choisir",
+    "dropHint": "Jusqu’à {maxFiles} fichiers, {maxFileSize} chacun. PDF, Word, Excel, Markdown, CSV, etc.",
+    "emptyTitle": "Aucun document pour l’instant",
+    "emptyDescription": "Importez des contrats, des spécifications, des rapports ou des notes. Les agents les trouvent via .kortix/knowledge/INDEX.md.",
+    "noMatch": "Aucun document ne correspond à « {query} ».",
+    "loadError": "Impossible de charger les connaissances",
+    "retry": "Réessayer",
+    "noAccessTitle": "Vous ne pouvez pas consulter les connaissances",
+    "noAccessDescription": "La lecture des documents du projet nécessite un accès aux fichiers de ce projet. Demandez à un responsable du projet.",
+    "actions": "Actions pour {name}",
+    "download": "Télécharger",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "uploadModal": {
+      "title": "Importer {count, plural, one {# document} other {# documents}}",
+      "description": "Les fichiers arrivent sur la branche par défaut en un seul commit. Les agents les voient lors de leur prochaine session.",
+      "folder": "Dossier",
+      "folderPlaceholder": "contrats",
+      "folderHint": "Facultatif. Un dossier dans .kortix/knowledge/",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Que contient ce document ?",
+      "descriptionHint": "Facultatif. Une ligne dans INDEX.md, appliquée à chaque fichier ci-dessus.",
+      "replace": "Remplacer les documents existants",
+      "submit": "Importer",
+      "removeFile": "Retirer {name}",
+      "tooMany": "Choisissez au plus {max} fichiers.",
+      "tooLarge": "{name} dépasse la limite de {limit} par fichier.",
+      "uploadTooLarge": "Un import doit faire {limit} au maximum.",
+      "projectFull": "Cela dépasserait la limite de connaissances de {limit}. Supprimez d’abord des documents."
+    },
+    "editModal": {
+      "title": "Modifier le document",
+      "description": "Les modifications arrivent sur la branche par défaut en un seul commit.",
+      "path": "Chemin",
+      "pathHint": "Relatif à .kortix/knowledge/ Modifiez-le pour déplacer le fichier.",
+      "save": "Enregistrer"
+    },
+    "deleteDialog": {
+      "title": "Supprimer {name} ?",
+      "description": "Le fichier et sa ligne dans INDEX.md sont supprimés en un seul commit sur la branche par défaut. L’historique Git conserve les versions précédentes.",
+      "confirm": "Supprimer"
+    },
+    "toast": {
+      "uploaded": "{count, plural, one {# document importé} other {# documents importés}}",
+      "updated": "Document mis à jour",
+      "deleted": "Document supprimé",
+      "downloadFailed": "Impossible de télécharger {name}"
+    }
   }
 }

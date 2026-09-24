@@ -379,7 +379,7 @@ All under `/p/:sandboxId/:port/*` (`combinedAuth` + rate-limit). `:sandboxId` = 
 
 ## 10. Files (read via git API; write via sandbox)
 
-Repo files are read-only over the project API; live edits happen in the sandbox (OpenCode file API via proxy) or via manifest commits. All git reads are `read`.
+Repo files are read-only over the project API except the knowledge folder (§10b); live edits happen in the sandbox (OpenCode file API via proxy) or via manifest commits. All git reads are `read`.
 
 `FILE-1` `GET /projects/:id/files?ref=&path=` → file/dir listing.
 `FILE-2` `GET /projects/:id/files/content?path=&ref=` → file text; **absent `path` param → 400**; non-existent file path is uncaught → surfaces 500 (not 404).
@@ -390,6 +390,13 @@ Repo files are read-only over the project API; live edits happen in the sandbox 
 `FILE-7` `GET /projects/:id/commits?ref=&path=` · `GET …/commits/:sha` · `GET …/commits/:sha/diff`.
 `FILE-8` `GET /projects/:id/version-diff?from=|head=&into=|base=` → diff between two refs (params are `from`/`head` and `into`/`base` — there is **no `to`**).
 `FILE-9` live file CRUD inside sandbox → through proxy to OpenCode file API on `:8000` (create/read/update/delete/list). Durable truth = git repo; sandbox tree is ephemeral.
+
+### 10b. Knowledge (project documents in `.kortix/knowledge/`)
+
+Documents a person uploads without a session. The project repository is the store: files commit under `.kortix/knowledge/<folder>/<file>` with a regenerated `.kortix/knowledge/INDEX.md` (one line per file: path, type, size, description) in the same commit, directly on the default branch. Reads gate on `project.file.read`, writes on `project.file.write`. Limits: 25 MiB per file, 10 files and 50 MiB per request, 200 MiB per project.
+
+`KNOW-1` owner lifecycle: `GET /projects/:id/knowledge` on a new project → 200 with no files and published limits · `POST …/knowledge` (multipart `file`, optional `folder`, `description`, `replace`) uploads a markdown file and a binary PDF → 201 with a 40-hex `commit_sha` · list returns both with type, exact byte size, and description · `GET /projects/:id/files?path=.kortix/knowledge` shows both documents plus `INDEX.md`, and `files/content` returns the markdown verbatim · `INDEX.md` holds one entry line per document · `GET …/knowledge/file?path=` returns the PDF with `application/pdf`, exact `Content-Length`, and an `ETag` equal to the git blob id of the uploaded bytes · re-upload of an existing path → 409 `knowledge_file_exists`; with `replace=true` → 201 keeping the description · `PATCH …/knowledge` moves the PDF and edits its description; the old path → 404 and the moved bytes keep the same blob id · `DELETE …/knowledge?path=` → 200; the file and its index line are gone; a second delete → 404 `knowledge_file_not_found`.
+`KNOW-2` refusals: traversal, hidden, and reserved paths (`folder=../..`, `a/../../b`, `.env`, root `INDEX.md`, delete/move/download with `../`) → 400 `knowledge_invalid_path` · a file over 25 MiB → 413 `knowledge_file_too_large` · 11 files in one request → 400 `knowledge_too_many_files` · a project `member` (no `project.file.read` or `project.file.write`) → 403 on list, download, upload, move, and delete · non-member → 403/404 · anonymous → 401 · afterwards the folder is still empty (no refused request wrote a commit).
 
 ---
 

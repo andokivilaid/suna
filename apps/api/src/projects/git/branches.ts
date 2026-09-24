@@ -87,7 +87,7 @@ async function readRemoteBranchTip(
  * order (downstream index construction must stay deterministic).
  */
 export async function hashBlobs(
-  files: Array<{ path: string; content: string }>,
+  files: Array<{ path: string; content: string | Uint8Array }>,
   tempDir: string,
   repoPath: string,
 ): Promise<Array<{ path: string; sha: string }>> {
@@ -438,7 +438,11 @@ export async function commitFileToBranch(
 export async function commitMultipleFilesToBranch(
   project: GitBackedProject,
   opts: {
-    files?: Array<{ path: string; content: string }>;
+    /**
+     * Bytes are committed verbatim: a `Uint8Array` becomes the blob exactly,
+     * so binary documents (PDF, DOCX, images) survive. A string is UTF-8.
+     */
+    files?: Array<{ path: string; content: string | Uint8Array }>;
     /** Repo-relative paths to remove from the tree in the same commit. */
     deletes?: string[];
     message: string;
@@ -458,7 +462,7 @@ export async function commitMultipleFilesToBranch(
 ): Promise<{ commitSha: string; branch: string; fileCount: number }> {
   const files = (opts.files ?? [])
     .map((f) => ({ path: normalizeTreePath(f.path), content: f.content }))
-    .filter((f): f is { path: string; content: string } => Boolean(f.path));
+    .filter((f): f is { path: string; content: string | Uint8Array } => Boolean(f.path));
   const deletes = (opts.deletes ?? [])
     .map((p) => normalizeTreePath(p))
     .filter((p): p is string => Boolean(p));

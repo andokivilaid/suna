@@ -36,6 +36,7 @@ import './routes/project-sessions';
 import './routes/session-environment';
 import './routes/session-transcripts';
 import './routes/session-attachments';
+import './routes/knowledge';
 import './routes/session-open-bundle';
 import './routes/session-stream';
 import './routes/project-audit';

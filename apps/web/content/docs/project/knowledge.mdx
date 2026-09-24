@@ -1,0 +1,102 @@
+---
+title: Knowledge
+description: Upload documents your agents can read. Kortix commits them to the project repository, so every session has a copy.
+---
+
+Knowledge is the set of documents your agents can read: contracts, specs,
+reports, spreadsheets, and notes. You upload them from the web app. No
+session needs to be running.
+
+Knowledge is not a separate database. Each document is a file in the
+project repository, under `.kortix/knowledge/`. Kortix clones the repository
+into every [session](/docs/work/sessions), so a document you upload now is
+on disk in the next session.
+
+## Upload documents
+
+1. Open the project and go to **Customize → Knowledge**.
+2. Drop files on the page, or click **Upload** and choose them.
+3. Optional: enter a **folder** (for example `contracts`) and a one-line
+   **description**. The description applies to every file in that upload.
+4. Click **Upload**.
+
+Each upload is one commit on the project's default branch. It does not go
+through a [change request](/docs/work/change-requests): a person with write
+access to project files is the reviewer. From the same page you can
+download, move, rename, re-describe, or delete a document. Each of those is
+also one commit.
+
+To overwrite a document that already exists, select **Replace documents
+that already exist**. Without it, an upload to an existing path fails.
+
+## Where the files live
+
+```text
+.kortix/knowledge/
+├── INDEX.md          One line per document. Agents read this first.
+├── brief.md
+└── contracts/
+    └── msa.pdf
+```
+
+Kortix rewrites `INDEX.md` in the same commit as every upload, move, or
+delete. Each line holds the path, type, size, and description:
+
+```markdown
+- [contracts/msa.pdf](<contracts/msa.pdf>) — pdf · 1.2 MB — Master services agreement
+```
+
+Git history keeps every earlier version of every document. Deleting a
+document removes it from the current branch, not from history.
+
+## How agents use knowledge
+
+Knowledge is not injected into the prompt. Every project gets the
+`kortix-knowledge` system skill. It tells the agent to read
+`.kortix/knowledge/INDEX.md` when a task may need project documents, then
+read the files it needs. Text formats (Markdown, CSV, JSON) are read
+directly. Office files and PDFs are converted to Markdown with `anydoc`
+(the `convert-documents-to-markdown` skill).
+
+An agent can also add a document. It writes the file and its `INDEX.md`
+line on its session branch and lands both through a change request, like
+any other repository change.
+
+## Limits
+
+Every session clones the repository, so keep knowledge small.
+
+| Limit | Value |
+|---|---|
+| One file | 25 MB |
+| One upload | 10 files, 50 MB |
+| All knowledge in a project | 200 MB |
+
+Git stores binary files whole, and every new version adds to the
+repository size. Prefer the text version of a document when you have one,
+and replace large files rarely.
+
+## Permissions
+
+| Action | Permission |
+|---|---|
+| List and download | `project.file.read` |
+| Upload, move, describe, delete | `project.file.write` |
+
+Project managers hold both by default. Plain project members hold neither,
+so the **Knowledge** tab does not appear for them. See
+[permissions](/docs/project/permissions).
+
+## API and SDK
+
+The web app uses the same public surface you can call:
+
+| HTTP | SDK (`kortix.project(id).knowledge`) |
+|---|---|
+| `GET /v1/projects/:id/knowledge` | `list()` |
+| `POST /v1/projects/:id/knowledge` (multipart `file`, `folder`, `description`, `replace`) | `upload(files, options)` |
+| `PATCH /v1/projects/:id/knowledge` | `update({ path, newPath, description })` |
+| `DELETE /v1/projects/:id/knowledge?path=` | `remove(path)` |
+| `GET /v1/projects/:id/knowledge/file?path=` | `download(path)` |
+
+See the [SDK reference](/docs/sdk/reference).

@@ -347,6 +347,8 @@ export const qk = {
      */
     files: (id: string) => [...qk.project.scope(id), 'files'] as const,
     fileSource: (id: string, path: string) => [...qk.project.files(id), path] as const,
+    /** `listProjectKnowledge(id)` — the documents in `.kortix/knowledge/`. */
+    knowledge: (id: string) => [...qk.project.scope(id), 'knowledge'] as const,
 
     branches: (id: string) => [...qk.project.scope(id), 'branches'] as const,
 
