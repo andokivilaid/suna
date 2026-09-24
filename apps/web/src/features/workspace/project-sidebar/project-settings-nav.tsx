@@ -54,6 +54,9 @@ export const TAB_PREFERENCE: readonly { key: CapabilityTab['key']; action: strin
   // thing you build — follows. Both keep the read leaves they always had.
   { key: 'agent', action: PROJECT_ACTIONS.PROJECT_AGENT_READ },
   { key: 'skills', action: PROJECT_ACTIONS.PROJECT_SKILL_READ },
+  // Knowledge — the documents in `.kortix/knowledge/` that agents read. It is
+  // repository files, so it takes the Files page leaf: `project.file.read`.
+  { key: 'knowledge', action: PROJECT_ACTIONS.PROJECT_FILE_READ },
   { key: 'connectors', action: PROJECT_ACTIONS.PROJECT_CONNECTOR_READ },
   // Triggers covers both schedules and webhooks — two views of one resource,
   // a project trigger — so it has one leaf. `project.trigger.read` is in

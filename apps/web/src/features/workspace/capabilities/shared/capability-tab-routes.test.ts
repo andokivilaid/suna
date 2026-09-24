@@ -9,16 +9,18 @@ import {
 } from './capability-tab-routes';
 
 describe('CAPABILITY_TABS', () => {
-  test('lists agent, skills, connectors, triggers, review, models, secrets, config in that order', () => {
+  test('lists agent, skills, knowledge, connectors, triggers, review, models, secrets, config in that order', () => {
     // Agents lead the bar (Marko, 2026-09-01): an agent is the one object a
     // person is granted access to, so it is the object Customize is built
     // around. Skills — the other thing you BUILD — follows; the rest is what
     // agents draw on. Review joined the row on 2026-09-02, when the trailing
     // Settings tab (`config`) was retired. Models led before all of that
-    // (Jay, 2026-08-17).
+    // (Jay, 2026-08-17). Knowledge — the project documents agents read —
+    // follows Skills (2026-09-24).
     expect(CAPABILITY_TABS.map((t) => t.key)).toEqual([
       'agent',
       'skills',
+      'knowledge',
       'connectors',
       'triggers',
       'review',

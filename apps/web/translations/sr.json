@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "Овај дијаграм није могуће приказати",
       "text91aec62280a3": "Преузми SVG",
       "text751dfdcf3878": "Ред {value0}",
-      "text0a7b76552107": "Налог конектора је преименован"
+      "text0a7b76552107": "Налог конектора је преименован",
+      "textdcb3e1c00e79": "Znanje",
+      "texte221a3eb6342": "znanje dokumenti otpremanja pdf datoteke"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "Gotovo. Nazad u Kortix aplikaciju"
+  },
+  "knowledge": {
+    "title": "Znanje",
+    "description": "Dokumenti koje tvoji agenti mogu da čitaju. Svaka datoteka se komituje u .kortix/knowledge/ i svaka sesija dobija kopiju.",
+    "upload": "Otpremi",
+    "uploadDocuments": "Otpremi dokumente",
+    "searchPlaceholder": "Pretraži dokumente",
+    "usage": "{count, plural, one {# dokument} few {# dokumenta} other {# dokumenata}} · {used} od {limit}",
+    "dropTitle": "Prevuci datoteke ovde ili klikni da izabereš",
+    "dropHint": "Do {maxFiles} datoteka, najviše {maxFileSize} po datoteci. PDF, Word, Excel, Markdown, CSV i drugo.",
+    "emptyTitle": "Još nema dokumenata",
+    "emptyDescription": "Otpremi ugovore, specifikacije, izveštaje ili beleške. Agenti ih pronalaze preko .kortix/knowledge/INDEX.md.",
+    "noMatch": "Nijedan dokument ne odgovara upitu „{query}“.",
+    "loadError": "Znanje nije moglo da se učita",
+    "retry": "Pokušaj ponovo",
+    "noAccessTitle": "Ne možeš da vidiš znanje",
+    "noAccessDescription": "Za čitanje dokumenata projekta potreban je pristup datotekama u ovom projektu. Obrati se menadžeru projekta.",
+    "actions": "Radnje za {name}",
+    "download": "Preuzmi",
+    "edit": "Uredi",
+    "delete": "Izbriši",
+    "cancel": "Otkaži",
+    "uploadModal": {
+      "title": "Otpremi {count, plural, one {# dokument} few {# dokumenta} other {# dokumenata}}",
+      "description": "Datoteke stižu na podrazumevanu granu u jednom komitu. Agenti ih vide u sledećoj sesiji.",
+      "folder": "Fascikla",
+      "folderPlaceholder": "ugovori",
+      "folderHint": "Opciono. Fascikla unutar .kortix/knowledge/",
+      "descriptionLabel": "Opis",
+      "descriptionPlaceholder": "Šta sadrži ovaj dokument?",
+      "descriptionHint": "Opciono. Jedan red u INDEX.md, primenjuje se na svaku datoteku iznad.",
+      "replace": "Zameni dokumente koji već postoje",
+      "submit": "Otpremi",
+      "removeFile": "Ukloni {name}",
+      "tooMany": "Izaberi najviše {max} datoteka.",
+      "tooLarge": "{name} prelazi ograničenje od {limit} po datoteci.",
+      "uploadTooLarge": "Jedno otpremanje mora biti {limit} ili manje.",
+      "projectFull": "Ovim bi se prešlo ograničenje znanja od {limit}. Prvo izbriši dokumente."
+    },
+    "editModal": {
+      "title": "Uredi dokument",
+      "description": "Izmene stižu na podrazumevanu granu u jednom komitu.",
+      "path": "Putanja",
+      "pathHint": "Relativno u odnosu na .kortix/knowledge/ Promeni je da premestiš datoteku.",
+      "save": "Sačuvaj"
+    },
+    "deleteDialog": {
+      "title": "Izbrisati {name}?",
+      "description": "Ovo uklanja datoteku i njen red u INDEX.md u jednom komitu na podrazumevanoj grani. Git istorija čuva ranije verzije.",
+      "confirm": "Izbriši"
+    },
+    "toast": {
+      "uploaded": "{count, plural, one {Otpremljen # dokument} few {Otpremljena # dokumenta} other {Otpremljeno # dokumenata}}",
+      "updated": "Dokument je ažuriran",
+      "deleted": "Dokument je izbrisan",
+      "downloadFailed": "Preuzimanje datoteke {name} nije uspelo"
+    }
   }
 }

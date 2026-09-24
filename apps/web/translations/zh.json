@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "无法渲染此图表",
       "text91aec62280a3": "下载 SVG",
       "text751dfdcf3878": "第 {value0} 行",
-      "text0a7b76552107": "已重命名连接器账户"
+      "text0a7b76552107": "已重命名连接器账户",
+      "textdcb3e1c00e79": "知识库",
+      "texte221a3eb6342": "知识库 文档 上传 PDF 资料"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "完成。返回 Kortix 应用"
+  },
+  "knowledge": {
+    "title": "知识库",
+    "description": "智能体可以读取的文档。每个文件都会提交到 .kortix/knowledge/，每个会话都会获得一份副本。",
+    "upload": "上传",
+    "uploadDocuments": "上传文档",
+    "searchPlaceholder": "搜索文档",
+    "usage": "{count, plural, other {# 个文档}} · 已用 {used}，上限 {limit}",
+    "dropTitle": "将文件拖放到此处，或点击选择",
+    "dropHint": "最多 {maxFiles} 个文件，每个不超过 {maxFileSize}。支持 PDF、Word、Excel、Markdown、CSV 等。",
+    "emptyTitle": "还没有文档",
+    "emptyDescription": "上传合同、规格说明、报告或笔记。智能体通过 .kortix/knowledge/INDEX.md 找到它们。",
+    "noMatch": "没有与“{query}”匹配的文档。",
+    "loadError": "无法加载知识库",
+    "retry": "重试",
+    "noAccessTitle": "你无法查看知识库",
+    "noAccessDescription": "读取项目文档需要此项目的文件访问权限。请联系项目管理员。",
+    "actions": "{name} 的操作",
+    "download": "下载",
+    "edit": "编辑",
+    "delete": "删除",
+    "cancel": "取消",
+    "uploadModal": {
+      "title": "{count, plural, other {上传 # 个文档}}",
+      "description": "文件会通过一次提交进入默认分支。智能体会在下一个会话中看到它们。",
+      "folder": "文件夹",
+      "folderPlaceholder": "contracts",
+      "folderHint": "可选。.kortix/knowledge/ 内的文件夹。",
+      "descriptionLabel": "说明",
+      "descriptionPlaceholder": "这个文档包含什么内容？",
+      "descriptionHint": "可选。作为 INDEX.md 中的一行，应用于上方的每个文件。",
+      "replace": "替换已存在的文档",
+      "submit": "上传",
+      "removeFile": "移除 {name}",
+      "tooMany": "最多选择 {max} 个文件。",
+      "tooLarge": "{name} 超过了单个文件 {limit} 的上限。",
+      "uploadTooLarge": "单次上传不能超过 {limit}。",
+      "projectFull": "这会超过 {limit} 的知识库上限。请先删除一些文档。"
+    },
+    "editModal": {
+      "title": "编辑文档",
+      "description": "更改会通过一次提交进入默认分支。",
+      "path": "路径",
+      "pathHint": "相对于 .kortix/knowledge/。修改路径即可移动文件。",
+      "save": "保存"
+    },
+    "deleteDialog": {
+      "title": "删除 {name}？",
+      "description": "这会在默认分支上通过一次提交删除该文件及其在 INDEX.md 中的行。Git 历史会保留早期版本。",
+      "confirm": "删除"
+    },
+    "toast": {
+      "uploaded": "{count, plural, other {已上传 # 个文档}}",
+      "updated": "文档已更新",
+      "deleted": "文档已删除",
+      "downloadFailed": "无法下载 {name}"
+    }
   }
 }

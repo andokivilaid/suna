@@ -30,6 +30,7 @@ import {
   AlarmIcon as AlarmClock,
   ArrowCircleUpIcon as ArrowUpCircle,
   SquaresFourIcon as Blocks,
+  BooksIcon as Books,
   RobotIcon as Bot,
   CalendarIcon as Calendar,
   ChatCircleIcon as ChatCircle,
@@ -616,6 +617,17 @@ export const menuRegistry: MenuItemDef[] = [
     href: '/projects/{projectId}/customize/skills',
     requiresProject: true,
     keywords: 'skills abilities',
+  },
+  {
+    id: 'proj-knowledge',
+    label: 'Knowledge',
+    icon: Books,
+    group: 'navigation',
+    showIn: ['commandPalette'],
+    kind: 'navigate',
+    href: '/projects/{projectId}/customize/knowledge',
+    requiresProject: true,
+    keywords: 'knowledge documents uploads pdf docs',
   },
   // Agents and Skills are declared BEFORE Connectors here, unlike the tab bar
   // order in `CAPABILITY_TABS`. Declaration order is the palette's tie-break

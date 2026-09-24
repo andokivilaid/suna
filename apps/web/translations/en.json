@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "Couldn't render this diagram",
       "text91aec62280a3": "Download SVG",
       "text751dfdcf3878": "Line {value0}",
-      "text0a7b76552107": "Renamed connector account"
+      "text0a7b76552107": "Renamed connector account",
+      "textdcb3e1c00e79": "Knowledge",
+      "texte221a3eb6342": "knowledge documents uploads pdf docs"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "Done. Back to the Kortix app"
+  },
+  "knowledge": {
+    "title": "Knowledge",
+    "description": "Documents your agents can read. Each file is committed to .kortix/knowledge/ and every session gets a copy.",
+    "upload": "Upload",
+    "uploadDocuments": "Upload documents",
+    "searchPlaceholder": "Search documents",
+    "usage": "{count, plural, one {# document} other {# documents}} · {used} of {limit}",
+    "dropTitle": "Drop files here or click to choose",
+    "dropHint": "Up to {maxFiles} files, {maxFileSize} each. PDF, Word, Excel, Markdown, CSV, and more.",
+    "emptyTitle": "No documents yet",
+    "emptyDescription": "Upload contracts, specs, reports, or notes. Agents find them through .kortix/knowledge/INDEX.md.",
+    "noMatch": "No documents match “{query}”.",
+    "loadError": "Could not load knowledge",
+    "retry": "Retry",
+    "noAccessTitle": "You cannot view knowledge",
+    "noAccessDescription": "Reading project documents needs file access in this project. Ask a project manager.",
+    "actions": "Actions for {name}",
+    "download": "Download",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "uploadModal": {
+      "title": "Upload {count, plural, one {# document} other {# documents}}",
+      "description": "The files land on the default branch in one commit. Agents see them in their next session.",
+      "folder": "Folder",
+      "folderPlaceholder": "contracts",
+      "folderHint": "Optional. A folder inside .kortix/knowledge/",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "What is in this document?",
+      "descriptionHint": "Optional. One line in INDEX.md, applied to every file above.",
+      "replace": "Replace documents that already exist",
+      "submit": "Upload",
+      "removeFile": "Remove {name}",
+      "tooMany": "Choose at most {max} files.",
+      "tooLarge": "{name} is over the {limit} file limit.",
+      "uploadTooLarge": "One upload must be {limit} or smaller.",
+      "projectFull": "This would exceed the {limit} knowledge limit. Delete documents first."
+    },
+    "editModal": {
+      "title": "Edit document",
+      "description": "Changes land on the default branch in one commit.",
+      "path": "Path",
+      "pathHint": "Relative to .kortix/knowledge/ Change it to move the file.",
+      "save": "Save"
+    },
+    "deleteDialog": {
+      "title": "Delete {name}?",
+      "description": "This removes the file and its INDEX.md line in one commit on the default branch. Git history keeps earlier versions.",
+      "confirm": "Delete"
+    },
+    "toast": {
+      "uploaded": "{count, plural, one {Uploaded # document} other {Uploaded # documents}}",
+      "updated": "Document updated",
+      "deleted": "Document deleted",
+      "downloadFailed": "Could not download {name}"
+    }
   }
 }

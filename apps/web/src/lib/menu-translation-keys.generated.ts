@@ -33,6 +33,7 @@ export const MENU_TRANSLATION_KEYS: Readonly<Record<string, string>> = {
   Home: 'text3a78695388b3',
   'Internal Browser': 'text875c0e464942',
   'Invite members': 'texte85663498c96',
+  Knowledge: 'textdcb3e1c00e79',
   'LLM Providers': 'textf9e89f3cc0c8',
   'Light Theme': 'textceab50a6f7f4',
   'Log Out': 'textd57d48b71020',
@@ -99,6 +100,7 @@ export const MENU_TRANSLATION_KEYS: Readonly<Record<string, string>> = {
   'identity sso saml oidc scim login provider single sign on directory': 'textcbb2e9a57f10',
   'internal browser preview iframe embedded web page': 'textfa55040f142a',
   'invite members add teammate email collaborator people access send': 'text07cbfe83d4d0',
+  'knowledge documents uploads pdf docs': 'texte221a3eb6342',
   'llm providers models anthropic openai openrouter google groq xai': 'text73149a51d652',
   'log out sign out logout signout disconnect': 'text35fc0e79987e',
   'members member workspace access collaborators people teammates roster who can see permissions grant share seats':

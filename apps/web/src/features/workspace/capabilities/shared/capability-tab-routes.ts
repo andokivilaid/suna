@@ -31,7 +31,16 @@
  * index cards keep their own icons in their own client files.
  */
 export interface CapabilityTab {
-  key: 'agent' | 'connectors' | 'skills' | 'triggers' | 'models' | 'secrets' | 'review' | 'config';
+  key:
+    | 'agent'
+    | 'connectors'
+    | 'skills'
+    | 'knowledge'
+    | 'triggers'
+    | 'models'
+    | 'secrets'
+    | 'review'
+    | 'config';
   label: string;
 }
 
@@ -72,6 +81,7 @@ export interface CapabilityTab {
 export const CAPABILITY_TABS: readonly CapabilityTab[] = [
   { key: 'agent', label: 'Agents' },
   { key: 'skills', label: 'Skills' },
+  { key: 'knowledge', label: 'Knowledge' },
   { key: 'connectors', label: 'Connectors' },
   { key: 'triggers', label: 'Triggers' },
   { key: 'review', label: 'Review' },
@@ -100,6 +110,7 @@ export const PRIMARY_TABS: readonly CapabilityTab['key'][] = ['agent'];
 export const CAPABILITY_SEGMENT: Record<CapabilityTab['key'], string> = {
   agent: 'agents',
   skills: 'skills',
+  knowledge: 'knowledge',
   connectors: 'connectors',
   triggers: 'triggers',
   review: 'review',

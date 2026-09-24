@@ -18639,7 +18639,9 @@
       "textc53147a0d05b": "この図を表示できませんでした",
       "text91aec62280a3": "SVG をダウンロード",
       "text751dfdcf3878": "{value0} 行目",
-      "text0a7b76552107": "コネクタのアカウント名を変更"
+      "text0a7b76552107": "コネクタのアカウント名を変更",
+      "textdcb3e1c00e79": "ナレッジ",
+      "texte221a3eb6342": "ナレッジ ドキュメント アップロード PDF 資料"
     }
   },
   "projectOnboarding": {
@@ -19642,5 +19644,62 @@
   },
   "connectorsAppReturn": {
     "done": "完了。Kortix アプリに戻る"
+  },
+  "knowledge": {
+    "title": "ナレッジ",
+    "description": "エージェントが読めるドキュメントです。各ファイルは .kortix/knowledge/ にコミットされ、すべてのセッションにコピーが渡されます。",
+    "upload": "アップロード",
+    "uploadDocuments": "ドキュメントをアップロード",
+    "searchPlaceholder": "ドキュメントを検索",
+    "usage": "{count, plural, other {# 件のドキュメント}} · {used} / {limit}",
+    "dropTitle": "ここにファイルをドロップするか、クリックして選択",
+    "dropHint": "最大 {maxFiles} ファイル、1 ファイルあたり {maxFileSize} まで。PDF、Word、Excel、Markdown、CSV など。",
+    "emptyTitle": "ドキュメントはまだありません",
+    "emptyDescription": "契約書、仕様書、レポート、メモをアップロードしてください。エージェントは .kortix/knowledge/INDEX.md から見つけます。",
+    "noMatch": "「{query}」に一致するドキュメントはありません。",
+    "loadError": "ナレッジを読み込めませんでした",
+    "retry": "再試行",
+    "noAccessTitle": "ナレッジを表示できません",
+    "noAccessDescription": "プロジェクトのドキュメントを読むには、このプロジェクトのファイルアクセス権が必要です。プロジェクトマネージャーに依頼してください。",
+    "actions": "{name} の操作",
+    "download": "ダウンロード",
+    "edit": "編集",
+    "delete": "削除",
+    "cancel": "キャンセル",
+    "uploadModal": {
+      "title": "{count, plural, other {# 件のドキュメントをアップロード}}",
+      "description": "ファイルは 1 つのコミットでデフォルトブランチに追加されます。エージェントは次のセッションで参照できます。",
+      "folder": "フォルダー",
+      "folderPlaceholder": "contracts",
+      "folderHint": "任意。.kortix/knowledge/ 内のフォルダーです。",
+      "descriptionLabel": "説明",
+      "descriptionPlaceholder": "このドキュメントの内容は？",
+      "descriptionHint": "任意。INDEX.md の 1 行として、上のすべてのファイルに適用されます。",
+      "replace": "既存のドキュメントを置き換える",
+      "submit": "アップロード",
+      "removeFile": "{name} を削除",
+      "tooMany": "選択できるファイルは最大 {max} 件です。",
+      "tooLarge": "{name} はファイル上限の {limit} を超えています。",
+      "uploadTooLarge": "1 回のアップロードは {limit} 以下にしてください。",
+      "projectFull": "ナレッジの上限 {limit} を超えます。先にドキュメントを削除してください。"
+    },
+    "editModal": {
+      "title": "ドキュメントを編集",
+      "description": "変更は 1 つのコミットでデフォルトブランチに反映されます。",
+      "path": "パス",
+      "pathHint": ".kortix/knowledge/ からの相対パスです。変更するとファイルが移動します。",
+      "save": "保存"
+    },
+    "deleteDialog": {
+      "title": "{name} を削除しますか？",
+      "description": "ファイルと INDEX.md の該当行を、デフォルトブランチ上の 1 つのコミットで削除します。以前のバージョンは Git 履歴に残ります。",
+      "confirm": "削除"
+    },
+    "toast": {
+      "uploaded": "{count, plural, other {# 件のドキュメントをアップロードしました}}",
+      "updated": "ドキュメントを更新しました",
+      "deleted": "ドキュメントを削除しました",
+      "downloadFailed": "{name} をダウンロードできませんでした"
+    }
   }
 }
