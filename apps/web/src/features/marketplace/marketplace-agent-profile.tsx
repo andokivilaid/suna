@@ -14,7 +14,7 @@ import { useTranslations } from '@/i18n/use-translations';
 import type { MarketplaceAgentDetail } from '@/lib/marketplace-client';
 import { cn } from '@/lib/utils';
 import {
-  agentGrantCopy,
+  agentGrantCopyParts,
   agentGrantKindLabel,
   agentGrantRows,
   frontmatterEntries,
@@ -35,6 +35,20 @@ export function AgentGrantIcon({ kind }: { kind: AgentGrantKind }) {
   return (
     <span className={cn('flex size-6 shrink-0 items-center justify-center rounded-sm', tile)}>
       <Icon className="size-3.5" />
+    </span>
+  );
+}
+
+/** One grant as a sentence, its identifier in code style ("Use your `stripe`
+ *  connection"). Shared by the detail and the install review. */
+export function AgentGrantText({ kind, value }: { kind: AgentGrantKind; value: string }) {
+  const tI18nComplete = useTranslations('hardcodedUi.i18nComplete');
+  const parts = agentGrantCopyParts(kind, value, tI18nComplete);
+  return (
+    <span className="min-w-0 truncate">
+      {parts.before}
+      {parts.value ? <span className="font-mono text-xs">{parts.value}</span> : null}
+      {parts.after}
     </span>
   );
 }
@@ -70,8 +84,8 @@ export function MarketplaceAgentProfile({ agent }: { agent: MarketplaceAgentDeta
             {grants.map((row) => (
               <li key={row.key} className="flex items-center gap-3 px-4 py-2.5">
                 <AgentGrantIcon kind={row.kind} />
-                <span className="text-foreground min-w-0 flex-1 truncate text-sm">
-                  {agentGrantCopy(row.kind, row.value, tI18nComplete)}
+                <span className="text-foreground flex min-w-0 flex-1 text-sm">
+                  <AgentGrantText kind={row.kind} value={row.value} />
                 </span>
                 <Badge variant="outline" size="sm">
                   {agentGrantKindLabel(row.kind, tI18nComplete)}

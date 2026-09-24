@@ -56,6 +56,21 @@ export function agentGrantCopy(kind: AgentGrantKind, value: string, t: UiTransla
   }
 }
 
+/** The grant sentence split around its value, so the value (a connector
+ *  slug, secret name, skill, or permission — all identifiers) renders in code
+ *  style while the surrounding words stay translated. */
+export function agentGrantCopyParts(
+  kind: AgentGrantKind,
+  value: string,
+  t: UiTranslator,
+): { before: string; value: string; after: string } {
+  const marker = '\u0000';
+  const sentence = agentGrantCopy(kind, marker, t);
+  const at = sentence.indexOf(marker);
+  if (at === -1) return { before: agentGrantCopy(kind, value, t), value: '', after: '' };
+  return { before: sentence.slice(0, at), value, after: sentence.slice(at + marker.length) };
+}
+
 /** Short kind label for a grant row's badge. */
 export function agentGrantKindLabel(kind: AgentGrantKind, t: UiTranslator): string {
   switch (kind) {

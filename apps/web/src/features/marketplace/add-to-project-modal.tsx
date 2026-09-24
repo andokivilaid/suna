@@ -51,8 +51,8 @@ import { useCurrentAccountStore } from '@/stores/current-account-store';
 import { useSettingsPanelStore } from '@/stores/settings-panel-store';
 import { getManagedGitStatus, listAccounts, provisionProject } from '@kortix/sdk';
 import { qk } from '@kortix/sdk/react';
-import { agentGrantCopy, agentGrantRows, approvedAgentGrants } from './marketplace-agent';
-import { AgentGrantIcon } from './marketplace-agent-profile';
+import { agentGrantRows, approvedAgentGrants } from './marketplace-agent';
+import { AgentGrantIcon, AgentGrantText } from './marketplace-agent-profile';
 import { capabilityCount, hasCapabilities } from './marketplace-install';
 import { useProjectPicker } from './marketplace-project-picker';
 import { prepareMarketplaceInstallSessionNavigation } from './marketplace-session-navigation';
@@ -357,9 +357,7 @@ export function AddToProjectModal({
                               label={
                                 <span className="flex min-w-0 items-center gap-2.5">
                                   <AgentGrantIcon kind={row.kind} />
-                                  <span className="truncate">
-                                    {agentGrantCopy(row.kind, row.value, tI18nComplete)}
-                                  </span>
+                                  <AgentGrantText kind={row.kind} value={row.value} />
                                 </span>
                               }
                             />

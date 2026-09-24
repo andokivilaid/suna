@@ -4,6 +4,7 @@ import { testUiTranslator } from '@/i18n/test-translator';
 import type { AgentGovernance } from '@/lib/marketplace-client';
 import {
   agentGrantCopy,
+  agentGrantCopyParts,
   agentGrantRows,
   approvedAgentGrants,
   frontmatterEntries,
@@ -54,6 +55,21 @@ describe('agentGrantCopy', () => {
     expect(agentGrantCopy('kortix_permissions', 'sessions.read', testUiTranslator)).toBe(
       'Use the Kortix sessions.read permission',
     );
+  });
+});
+
+describe('agentGrantCopyParts', () => {
+  test('splits the sentence around the value so the value can render as code', () => {
+    expect(agentGrantCopyParts('connectors', 'stripe', testUiTranslator)).toEqual({
+      before: 'Use your ',
+      value: 'stripe',
+      after: ' connection',
+    });
+    expect(agentGrantCopyParts('secrets', 'STRIPE_KEY', testUiTranslator)).toEqual({
+      before: 'Read the ',
+      value: 'STRIPE_KEY',
+      after: ' secret',
+    });
   });
 });
 
