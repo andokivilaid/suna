@@ -18639,7 +18639,19 @@
       "textc53147a0d05b": "Impossible d'afficher ce diagramme",
       "text91aec62280a3": "Télécharger le SVG",
       "text751dfdcf3878": "Ligne {value0}",
-      "text0a7b76552107": "Compte de connecteur renommé"
+      "text0a7b76552107": "Compte de connecteur renommé",
+      "text9ff64b83cc7c": "Compétences et agents",
+      "text40cc6b0da5a3": "Utiliser votre connexion {value0}",
+      "texte71987cb4f83": "Lire le secret {value0}",
+      "text2feb0245036c": "Charger la compétence {value0}",
+      "textbaf0a7ae2251": "Utiliser l’autorisation Kortix {value0}",
+      "text19609ea23c43": "Ce qu’il obtiendra",
+      "text55ee9aa25faf": "Aucun connecteur, secret, compétence ni autorisation. Les accès sont refusés par défaut.",
+      "text926c86e3d187": "Ajouté à kortix.yaml",
+      "text23d4a7a67032": "Vérifiez ce que cet agent obtient",
+      "text346ba794a80f": "Décochez ce que vous ne voulez pas accorder. L’agent est ajouté uniquement avec les éléments cochés.",
+      "text229efc8f5263": "Autorisation",
+      "text961e15b7f263": "Le prompt n’a pas pu être chargé depuis sa source."
     }
   },
   "projectOnboarding": {

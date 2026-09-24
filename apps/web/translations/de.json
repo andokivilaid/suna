@@ -18639,7 +18639,19 @@
       "textc53147a0d05b": "Dieses Diagramm konnte nicht gerendert werden",
       "text91aec62280a3": "SVG herunterladen",
       "text751dfdcf3878": "Zeile {value0}",
-      "text0a7b76552107": "Connector-Konto umbenannt"
+      "text0a7b76552107": "Connector-Konto umbenannt",
+      "text9ff64b83cc7c": "Skills und Agenten",
+      "text40cc6b0da5a3": "Ihre {value0}-Verbindung nutzen",
+      "texte71987cb4f83": "Das Secret {value0} lesen",
+      "text2feb0245036c": "Die Fähigkeit {value0} laden",
+      "textbaf0a7ae2251": "Die Kortix-Berechtigung {value0} nutzen",
+      "text19609ea23c43": "Was er erhält",
+      "text55ee9aa25faf": "Keine Connectors, Secrets, Fähigkeiten oder Berechtigungen. Freigaben sind standardmäßig verweigert.",
+      "text926c86e3d187": "Zu kortix.yaml hinzugefügt",
+      "text23d4a7a67032": "Prüfen, was dieser Agent erhält",
+      "text346ba794a80f": "Entfernen Sie das Häkchen bei allem, was Sie nicht freigeben möchten. Der Agent wird nur mit den markierten Elementen hinzugefügt.",
+      "text229efc8f5263": "Berechtigung",
+      "text961e15b7f263": "Der Prompt konnte nicht aus seiner Quelle geladen werden."
     }
   },
   "projectOnboarding": {

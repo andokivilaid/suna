@@ -18639,7 +18639,19 @@
       "textc53147a0d05b": "Couldn't render this diagram",
       "text91aec62280a3": "Download SVG",
       "text751dfdcf3878": "Line {value0}",
-      "text0a7b76552107": "Renamed connector account"
+      "text0a7b76552107": "Renamed connector account",
+      "text9ff64b83cc7c": "Skills and agents",
+      "text40cc6b0da5a3": "Use your {value0} connection",
+      "texte71987cb4f83": "Read the {value0} secret",
+      "text2feb0245036c": "Load the {value0} skill",
+      "textbaf0a7ae2251": "Use the Kortix {value0} permission",
+      "text19609ea23c43": "What it will get",
+      "text55ee9aa25faf": "No connectors, secrets, skills, or permissions. Grants are deny-by-default.",
+      "text926c86e3d187": "Added to kortix.yaml",
+      "text23d4a7a67032": "Review what this agent gets",
+      "text346ba794a80f": "Uncheck anything you do not want to grant. The agent is added with only the checked items.",
+      "text229efc8f5263": "Permission",
+      "text961e15b7f263": "The prompt could not be loaded from its source."
     }
   },
   "projectOnboarding": {

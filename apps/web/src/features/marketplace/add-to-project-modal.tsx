@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Field,
   FieldContent,
@@ -50,6 +51,8 @@ import { useCurrentAccountStore } from '@/stores/current-account-store';
 import { useSettingsPanelStore } from '@/stores/settings-panel-store';
 import { getManagedGitStatus, listAccounts, provisionProject } from '@kortix/sdk';
 import { qk } from '@kortix/sdk/react';
+import { agentGrantCopy, agentGrantRows, approvedAgentGrants } from './marketplace-agent';
+import { AgentGrantIcon } from './marketplace-agent-profile';
 import { capabilityCount, hasCapabilities } from './marketplace-install';
 import { useProjectPicker } from './marketplace-project-picker';
 import { prepareMarketplaceInstallSessionNavigation } from './marketplace-session-navigation';
@@ -92,8 +95,25 @@ export function AddToProjectModal({
   const [target, setTarget] = useState<string>(fixedProjectId ?? NEW_PROJECT);
   const [newProjectName, setNewProjectName] = useState(humanizedTitle);
   const [busy, setBusy] = useState(false);
+  // Agents: the grant rows the user unchecked in the capability review.
+  const [declined, setDeclined] = useState<ReadonlySet<string>>(() => new Set());
 
   const installSession = useInstallMarketplaceItemAsSession();
+
+  // An agent installs with exactly the grant approved here — the review lists
+  // its declared kortix.yaml grant, one checkbox per connector/secret/skill/
+  // permission, and the session receives only the checked ones.
+  const agent =
+    item.type === 'registry:agent' && 'agent' in item ? (item.agent ?? undefined) : undefined;
+  const agentRows = useMemo(() => agentGrantRows(agent?.governance), [agent]);
+  const grants = agent ? approvedAgentGrants(agent.governance, declined) : undefined;
+  const toggleGrant = (key: string, granted: boolean) =>
+    setDeclined((prev) => {
+      const next = new Set(prev);
+      if (granted) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   // Pre-check managed git the same way the New Project modal does — self-host
   // with nothing configured should route to Git settings instead of letting
@@ -122,6 +142,7 @@ export function AddToProjectModal({
     if (!open) return;
     setTarget(fixedProjectId ?? NEW_PROJECT);
     setNewProjectName(humanizedTitle);
+    setDeclined(new Set());
   }, [open, fixedProjectId, humanizedTitle]);
 
   const caps = item.capabilities;
@@ -168,8 +189,13 @@ export function AddToProjectModal({
               { itemId: item.id, title: item.title },
               tI18nComplete.raw('text1f4114a47e76'),
             )
-          : (await installSession.mutateAsync({ projectId: project.project_id, id: item.id }))
-              .session_id;
+          : (
+              await installSession.mutateAsync({
+                projectId: project.project_id,
+                id: item.id,
+                grants,
+              })
+            ).session_id;
         const sessionHref = prepareMarketplaceInstallSessionNavigation(
           queryClient,
           router,
@@ -183,7 +209,11 @@ export function AddToProjectModal({
       }
 
       const projectId = target;
-      const { session_id } = await installSession.mutateAsync({ projectId, id: item.id });
+      const { session_id } = await installSession.mutateAsync({
+        projectId,
+        id: item.id,
+        grants,
+      });
       const sessionHref = prepareMarketplaceInstallSessionNavigation(
         queryClient,
         router,
@@ -304,7 +334,44 @@ export function AddToProjectModal({
                 </FieldDescription>
               )}
 
-              {showCaps ? (
+              {agent ? (
+                <Field variant="outline" data-testid="agent-grant-review">
+                  <FieldContent>
+                    <div className="flex items-center gap-2">
+                      <FieldTitle>{tI18nComplete.raw('text23d4a7a67032')}</FieldTitle>
+                      <Badge variant="outline" size="sm" className="tabular-nums">
+                        {agentRows.length - declined.size}/{agentRows.length}
+                      </Badge>
+                    </div>
+                    {agentRows.length > 0 ? (
+                      <>
+                        <FieldDescription>{tI18nComplete.raw('text346ba794a80f')}</FieldDescription>
+                        <div className="-mx-3 mt-1 space-y-0.5">
+                          {agentRows.map((row) => (
+                            <Checkbox
+                              key={row.key}
+                              data-grant={row.key}
+                              checked={!declined.has(row.key)}
+                              onCheckedChange={(v) => toggleGrant(row.key, v === true)}
+                              disabled={busy}
+                              label={
+                                <span className="flex min-w-0 items-center gap-2.5">
+                                  <AgentGrantIcon kind={row.kind} />
+                                  <span className="truncate">
+                                    {agentGrantCopy(row.kind, row.value, tI18nComplete)}
+                                  </span>
+                                </span>
+                              }
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <FieldDescription>{tI18nComplete.raw('text55ee9aa25faf')}</FieldDescription>
+                    )}
+                  </FieldContent>
+                </Field>
+              ) : showCaps ? (
                 <Field variant="outline">
                   <FieldContent>
                     <div className="flex items-center gap-2">

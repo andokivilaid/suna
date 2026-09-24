@@ -5,11 +5,14 @@ import {
   buildMarketplaceGridRows,
   flattenMarketplaceItems,
   MARKETPLACE_GRID_COLUMNS,
+  marketplaceBrowseTypes,
   marketplaceGridRowKey,
+  marketplaceTypeFromParam,
   resolveMarketplaceTypeSectionTotal,
   shouldFetchNextMarketplacePage,
   shouldVirtualizeMarketplacePagedGrid,
   sumMarketplaceTypeCounts,
+  withMarketplaceTypeParam,
 } from './marketplace-grid';
 
 function makeItems(type: string, ids: string[]): MarketplaceItem[] {
@@ -229,5 +232,52 @@ describe('shouldVirtualizeMarketplacePagedGrid', () => {
   test('a large source that has fetched multiple pages switches to the windowed render', () => {
     expect(shouldVirtualizeMarketplacePagedGrid(2)).toBe(true);
     expect(shouldVirtualizeMarketplacePagedGrid(50)).toBe(true);
+  });
+});
+
+describe('marketplaceBrowseTypes', () => {
+  test('orders skills before agents and keeps only types that have items', () => {
+    expect(marketplaceBrowseTypes(['registry:agent', 'registry:skill'], {})).toEqual([
+      'registry:skill',
+      'registry:agent',
+    ]);
+    expect(marketplaceBrowseTypes(['registry:skill'], {})).toEqual(['registry:skill']);
+  });
+
+  test('a type counted in the source summaries shows even when absent from the first page', () => {
+    expect(marketplaceBrowseTypes(['registry:skill'], { agent: 62 })).toEqual([
+      'registry:skill',
+      'registry:agent',
+    ]);
+  });
+
+  test('never lists projects or unknown types as a browse facet', () => {
+    expect(marketplaceBrowseTypes(['registry:project', 'registry:command'], { bundle: 3 })).toEqual(
+      [],
+    );
+  });
+});
+
+describe('marketplaceTypeFromParam', () => {
+  test('maps a short ?type= value to its registry type', () => {
+    expect(marketplaceTypeFromParam('agent')).toBe('registry:agent');
+    expect(marketplaceTypeFromParam('skill')).toBe('registry:skill');
+  });
+
+  test('anything else is "all"', () => {
+    expect(marketplaceTypeFromParam(null)).toBe('all');
+    expect(marketplaceTypeFromParam('command')).toBe('all');
+  });
+});
+
+describe('withMarketplaceTypeParam', () => {
+  test('sets the short type and keeps other params', () => {
+    expect(withMarketplaceTypeParam('/marketplace?source=kortix', 'registry:agent')).toBe(
+      '/marketplace?source=kortix&type=agent',
+    );
+  });
+
+  test('"all" removes the param', () => {
+    expect(withMarketplaceTypeParam('/marketplace?type=agent', 'all')).toBe('/marketplace');
   });
 });

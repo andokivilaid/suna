@@ -21,17 +21,20 @@ import { cn } from '@/lib/utils';
 import { AddMarketplaceModal } from './add-marketplace-modal';
 import {
   MARKETPLACE_GRID_COLUMNS,
+  marketplaceBrowseTypes,
+  marketplaceTypeFromParam,
   resolveMarketplaceTypeSectionTotal,
   sumMarketplaceTypeCounts,
+  withMarketplaceTypeParam,
 } from './marketplace-grid';
 import { typeMeta } from './marketplace-meta';
 import { MarketplaceShell, type MarketplaceCrumb } from './marketplace-shell';
 
-// Only skills are browseable alongside Projects today (agents/commands/
-// bundles are hidden from browse — see MARKETPLACE_VISIBLE_TYPES on the API).
-const TYPE_ORDER = ['registry:skill'];
+// Skills and agents are browseable alongside Projects (commands/bundles are
+// hidden from browse — see MARKETPLACE_VISIBLE_TYPES on the API).
 
 const ALL_SOURCES = 'all';
+const ALL_TYPES = 'all';
 
 function sectionId(type: string): string {
   return `type-${type.replace('registry:', '')}`;
@@ -117,24 +120,50 @@ export function MarketplaceExplore({
   // the public page ('all') stays fully SSR'd and a deep-linked `?source=` is
   // picked up after hydration; embedded (Customize) keeps it purely local.
   const [source, setSource] = useState<string>(ALL_SOURCES);
+  // Type facet (Skills / Agents). Public page mirrors it to `?type=`.
+  const [typeFilter, setTypeFilter] = useState<string>(ALL_TYPES);
 
   useEffect(() => {
     if (!syncUrl) return;
-    const slug = new URLSearchParams(window.location.search).get('source');
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('source');
     if (slug) setSource(companyIdFromSlug(slug));
+    setTypeFilter(marketplaceTypeFromParam(params.get('type')));
   }, [syncUrl]);
+
+  const scrollToTop = useCallback(() => {
+    if (syncUrl) window.scrollTo({ top: 0, behavior: 'smooth' });
+    else scrollContainerRef?.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [syncUrl, scrollContainerRef]);
 
   const selectSource = useCallback(
     (id: string) => {
       setSource(id);
       if (syncUrl) {
-        window.history.replaceState(null, '', marketplaceSourceHref(id));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        scrollContainerRef?.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        window.history.replaceState(
+          null,
+          '',
+          withMarketplaceTypeParam(marketplaceSourceHref(id), typeFilter),
+        );
       }
+      scrollToTop();
     },
-    [syncUrl, scrollContainerRef],
+    [syncUrl, typeFilter, scrollToTop],
+  );
+
+  const selectType = useCallback(
+    (type: string) => {
+      setTypeFilter(type);
+      if (syncUrl) {
+        window.history.replaceState(
+          null,
+          '',
+          withMarketplaceTypeParam(`${window.location.pathname}${window.location.search}`, type),
+        );
+      }
+      scrollToTop();
+    },
+    [syncUrl, scrollToTop],
   );
 
   const [query, setQuery] = useState('');
@@ -167,29 +196,36 @@ export function MarketplaceExplore({
   );
   const typeCounts = useMemo(() => sumMarketplaceTypeCounts(marketplaces), [marketplaces]);
 
-  const groups = useMemo(() => {
-    const byType = new Map<string, MarketplaceItem[]>();
-    for (const it of componentItems) {
-      const arr = byType.get(it.type) ?? [];
-      arr.push(it);
-      byType.set(it.type, arr);
-    }
-    return [...byType.keys()]
-      .sort((a, b) => {
-        const ia = TYPE_ORDER.indexOf(a);
-        const ib = TYPE_ORDER.indexOf(b);
-        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
-      })
-      .map((type) => {
-        const items = byType.get(type)!;
-        return {
-          type,
-          label: pluralize(typeMeta(type, tI18nComplete).label),
-          items,
-          total: resolveMarketplaceTypeSectionTotal(type, typeCounts, items.length),
-        };
-      });
-  }, [componentItems, typeCounts, tI18nComplete]);
+  // One section per browse type that has items — from the loaded page or the
+  // source summaries, so agents appear even when the SSR-bounded first page
+  // holds none of them.
+  const browseTypes = useMemo(
+    () =>
+      marketplaceBrowseTypes(
+        componentItems.map((it) => it.type),
+        typeCounts,
+      ),
+    [componentItems, typeCounts],
+  );
+  const activeType = browseTypes.includes(typeFilter) ? typeFilter : ALL_TYPES;
+  const typeParam = activeType === ALL_TYPES ? undefined : activeType;
+
+  const groups = useMemo(
+    () =>
+      browseTypes
+        .filter((type) => activeType === ALL_TYPES || type === activeType)
+        .map((type) => {
+          const localCount = componentItems.filter((it) => it.type === type).length;
+          return {
+            type,
+            label: pluralize(typeMeta(type, tI18nComplete).label),
+            total: resolveMarketplaceTypeSectionTotal(type, typeCounts, localCount),
+          };
+        }),
+    [browseTypes, activeType, componentItems, typeCounts, tI18nComplete],
+  );
+  const catalogHeading =
+    groups.length === 1 ? groups[0].label : tI18nComplete.raw('text9ff64b83cc7c');
 
   // Embedded: the fixed top bar already says "Marketplace", so the lone
   // "Marketplace" crumb on the all-sources view is redundant — drop it. A
@@ -237,9 +273,35 @@ export function MarketplaceExplore({
             <InputGroupSearchClear onClick={() => setQuery('')} />
           </InputGroupSearch>
 
+          {browseTypes.length > 1 ? (
+            <div className="space-y-1" data-testid="marketplace-type-facet">
+              <div className="text-muted-foreground px-2.5 pb-1 text-xs font-medium">
+                {tI18nComplete.raw('texta5fc918683bf')}
+              </div>
+              <SourceRow
+                label={tI18nComplete.raw('textf10988e79e8d')}
+                active={activeType === ALL_TYPES}
+                onClick={() => selectType(ALL_TYPES)}
+              />
+              {browseTypes.map((type) => {
+                const tm = typeMeta(type, tI18nComplete);
+                return (
+                  <SourceRow
+                    key={type}
+                    label={pluralize(tm.label)}
+                    count={typeCounts[type.replace(/^registry:/, '')]}
+                    active={activeType === type}
+                    avatar={<tm.Icon className="text-muted-foreground size-4" />}
+                    onClick={() => selectType(type)}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
+
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-2 px-2.5 pb-1">
-              <div className="text-muted-foreground/70 text-xs font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium">
                 {tI18nComplete.raw('textcaf85b0888d7')}
               </div>
               {canManageSources ? (
@@ -299,13 +361,14 @@ export function MarketplaceExplore({
         {searching || !isAll || componentItems.length > 0 ? (
           <div className="space-y-12">
             <SectionHeading
-              title={sourceLabel ?? 'Skills'}
+              title={sourceLabel ?? catalogHeading}
               subtitle={tI18nComplete.raw('text705edc563dcc')}
             />
 
             {searching ? (
               <MarketplacePagedGrid
                 query={debounced}
+                type={typeParam}
                 source={isAll ? undefined : source}
                 publicOnly={publicOnly}
                 scrollContainerRef={scrollContainerRef}
@@ -330,8 +393,8 @@ export function MarketplaceExplore({
               />
             ) : isAll ? (
               // Show the whole catalog at once — one virtualized, scrollable grid
-              // per type. Single type (skills) → no redundant per-type heading
-              // (the "Skills" section heading above already names it). When there's
+              // per type. A single visible type → no redundant per-type heading
+              // (the section heading above already names it). When there's
               // nothing here, the section is hidden entirely (see the wrapper below).
               <div className="space-y-12">
                 {groups.map((g) => (
@@ -356,6 +419,7 @@ export function MarketplaceExplore({
             ) : (
               <MarketplacePagedGrid
                 source={source}
+                type={typeParam}
                 publicOnly={publicOnly}
                 scrollContainerRef={scrollContainerRef}
                 columns={MARKETPLACE_GRID_COLUMNS}

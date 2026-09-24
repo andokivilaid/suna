@@ -16,6 +16,7 @@ import {
   removeMarketplaceSource,
   type AddSourceInput,
   type ItemsPage,
+  type MarketplaceInstallGrants,
 } from '@/lib/marketplace-client';
 import { MARKETPLACE_ITEMS_PAGE_SIZE } from '@/lib/marketplace-public';
 
@@ -163,8 +164,16 @@ export function useMarketplaceItemFile(
  *  the session actually runs. */
 export function useInstallMarketplaceItemAsSession() {
   return useMutation({
-    mutationFn: ({ projectId, id }: { projectId: string; id: string }) =>
-      installMarketplaceItemAsSession(projectId, id),
+    mutationFn: ({
+      projectId,
+      id,
+      grants,
+    }: {
+      projectId: string;
+      id: string;
+      /** Agents only: the capability set approved in the install review. */
+      grants?: MarketplaceInstallGrants;
+    }) => installMarketplaceItemAsSession(projectId, id, grants),
   });
 }
 
