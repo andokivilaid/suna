@@ -212,8 +212,10 @@ flow(
       (await owner.post(LIST, form(many), { params })).status(400).body().has('$.code', 'knowledge_too_many_files');
     });
 
-    await ctx.step('a project member without project.file.write cannot upload or delete -> 403', async () => {
+    await ctx.step('a project member (no project.file.read or .write) cannot list, download, upload, move, or delete -> 403', async () => {
       const asMember = ctx.client.as(member);
+      (await asMember.get(LIST, { params })).status(403);
+      (await asMember.get(DOWNLOAD, { params, query: { path: 'member.md' } })).status(403);
       (await asMember.post(LIST, form([['x', 'member.md', 'text/markdown']]), { params })).status(403);
       (await asMember.del(LIST, { params, query: { path: 'member.md' } })).status(403);
       (await asMember.patch(LIST, { path: 'member.md', description: 'x' }, { params })).status(403);
