@@ -150,14 +150,35 @@ export async function removeMarketplaceSource(id: string): Promise<{ ok: boolean
   );
 }
 
+/**
+ * The capability set a user approved for a `registry:agent` install — a subset
+ * of the agent's declared kortix.yaml grant. Omitted kinds grant nothing
+ * (kortix.yaml v2 is deny-by-default). The server rejects any value the agent
+ * does not declare, so approval can only narrow the grant.
+ */
+export interface MarketplaceInstallGrants {
+  connectors?: string[];
+  secrets?: string[];
+  skills?: string[];
+  kortix_permissions?: string[];
+}
+
+export interface CreateMarketplaceInstallSessionOptions {
+  /** Agents only: the approved grant. Omit to approve the full declared grant. */
+  grants?: MarketplaceInstallGrants;
+}
+
+/** Start an agent session that installs a marketplace item into `projectId`
+ *  and opens a change request. Navigate into `session_id` to watch it work. */
 export async function createMarketplaceInstallSession(
   projectId: string,
   itemId: string,
+  options?: CreateMarketplaceInstallSessionOptions,
 ): Promise<{ session_id: string }> {
   return unwrap(
     await backendApi.post<{ session_id: string }>(
       `/projects/${encodeURIComponent(projectId)}/marketplace/install-session`,
-      { id: itemId },
+      options?.grants ? { id: itemId, grants: options.grants } : { id: itemId },
     ),
     'Failed to start marketplace install session',
   );
