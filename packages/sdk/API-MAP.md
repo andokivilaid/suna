@@ -116,7 +116,7 @@ try/catching every call.
 | tools ids / list | `client.tool.{ids,list}` | ✅ |
 | skills **list** | `client.app.skills` → `/skill` | ✅ |
 | skills **create/update/delete** | daemon `/file/upload`,`/file/mkdir`,`DELETE /file` + `instance.dispose` | ❌ web-local (`features/skills`) |
-| MCP status/add/connect/disconnect/oauth | `client.mcp.*` | ✅ |
+| MCP status/add/connect/disconnect/oauth | `client.mcp.*` | ✅ (`add` is in-memory only; persist with `createConnector` + `provider: 'mcp'`) |
 
 ### 9. Terminal (PTY)  ✅
 Kortix-native (`opencode/pty.ts`), independent of the agent runtime — daemon

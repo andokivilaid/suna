@@ -5,7 +5,7 @@
  *
  * Wraps the SDK's `client.mcp.*` namespace:
  * - status()         — list all servers + their statuses
- * - add()            — register a new MCP server
+ * - add()            — register a new MCP server (in-memory only; deprecated, see useAddMcpServer)
  * - connect()        — connect a server by name
  * - disconnect()     — disconnect a server by name
  * - auth.start()     — start OAuth flow (returns authorization URL)
@@ -67,6 +67,18 @@ export interface AddMcpServerParams {
   headers?: Record<string, string>;
 }
 
+/**
+ * Register an MCP server on the session's running OpenCode (`POST /mcp`).
+ *
+ * @deprecated The registration is in-memory only. OpenCode keeps it in process
+ * memory and never writes it to config, so it is lost on the next OpenCode
+ * restart, sandbox restart, or new session. Add a persistent project connector
+ * instead: `createConnector(projectId, { slug, provider: 'mcp', transport:
+ * 'http', url })` from `@kortix/sdk` (or `kortix.project(projectId)
+ * .connectors.create(...)`). Call `discoverConnectorAuth(projectId, draft)`
+ * first to learn whether the server needs OAuth. Kept for compatibility; it
+ * is removed in the next major.
+ */
 export function useAddMcpServer() {
   const queryClient = useQueryClient();
 
