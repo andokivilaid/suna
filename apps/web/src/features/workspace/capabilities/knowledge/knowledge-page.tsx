@@ -497,7 +497,11 @@ function UploadModal({
     onError: (error: Error) => errorToast(error.message),
   });
 
-  const selection = files ?? [];
+  // While the modal animates closed `files` is already null. Keep showing the
+  // last selection so the title does not flash "Upload 0 documents".
+  const [shown, setShown] = useState<File[]>([]);
+  if (files !== null && files !== shown) setShown(files);
+  const selection = files ?? shown;
   const problem = checkUploadSelection(selection, knowledge.limits, knowledge.total_bytes);
   const message = problem ? problemMessage(t, problem, knowledge.limits) : null;
 
