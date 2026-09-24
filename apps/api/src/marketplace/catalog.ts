@@ -414,13 +414,13 @@ function buildStarterRegistry(): RegistryJson {
         updatePolicy: "kortix-managed",
       };
     } else if (
-      item.type === "registry:skill" &&
+      (item.type === "registry:skill" || item.type === "registry:agent") &&
       primaryPath != null &&
       starterFloorPaths.has(primaryPath)
     ) {
-      // A starter-floor skill: it stands on its own in the catalog AND ships
-      // inside the Kortix Starter project, so tag it so the UI can badge it
-      // "Part of Kortix Starter" and link back to the whole project.
+      // A starter-floor skill or agent: it stands on its own in the catalog AND
+      // ships inside the Kortix Starter project, so tag it so the UI can badge
+      // it "Part of Kortix Starter" and link back to the whole project.
       item.meta = {
         ...(item.meta ?? {}),
         partOfProject: { id: STARTER_KIT_ITEM_ID, title: "Kortix Starter" },
@@ -1969,6 +1969,14 @@ function isBrowseableCatalogItem(it: CatalogItem): boolean {
   // live via `kortix skills get`, so they're not browse-and-install cards. They
   // stay installable by id (getCatalogEntry, ungated).
   if (it.managedBy === "kortix") return false;
+  // Starter-floor agents (kortix, harness-reflector, session-reviewer) are
+  // already declared in every project's kortix.yaml — adding one again would
+  // only collide. They resolve by id (badged "Part of Kortix Starter").
+  if (
+    it.type === "registry:agent" &&
+    it.partOfProject?.id === STARTER_KIT_ITEM_ID
+  )
+    return false;
   return MARKETPLACE_VISIBLE_TYPES.has(it.type) && !it.hidden;
 }
 

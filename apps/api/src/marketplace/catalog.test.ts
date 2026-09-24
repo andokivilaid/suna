@@ -99,6 +99,27 @@ describe('template + agent resolution', () => {
     expect(detail!.capabilities.secrets).toContain('STRIPE_KEY');
   });
 
+  test('starter-floor agents ship in every project, so they are not browse tiles', () => {
+    const mix = [
+      item({
+        type: 'registry:agent',
+        name: 'kortix',
+        id: 'kortix-starter:kortix',
+        partOfProject: { id: 'kortix-projects:starter', title: 'Kortix Starter' },
+      }),
+      item({ type: 'registry:agent', name: 'triage-agent', id: 'acme:triage-agent' }),
+    ];
+    expect(pageCatalogItems(mix, { type: 'agent' }).items.map((i) => i.id)).toEqual([
+      'acme:triage-agent',
+    ]);
+  });
+
+  test('but a starter-floor agent still resolves by id, badged as part of Kortix Starter', async () => {
+    const detail = await getCatalogItemDetail('kortix-starter:kortix');
+    expect(detail?.type).toBe('registry:agent');
+    expect(detail?.partOfProject).toEqual({ id: 'kortix-projects:starter', title: 'Kortix Starter' });
+  });
+
   test('non-agent detail has no agent block', async () => {
     const detail = await getCatalogItemDetail('kortix-starter:invoice-math');
     expect(detail).not.toBeNull();
