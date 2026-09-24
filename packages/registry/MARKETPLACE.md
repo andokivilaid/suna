@@ -231,6 +231,38 @@ permission-dialog model (mobile apps, OAuth scopes, browser extensions) applied
 to agent capabilities. It converts "others push shit" from *trust the author*
 into *trust nothing, approve explicitly*.
 
+#### Agents: the kortix.yaml grant is the capability manifest
+
+A `registry:agent` item lands as two things: its OpenCode file
+(`@agents/<name>.md`) and an `agents.<name>` entry in the project's
+kortix.yaml. That entry is governance — `connectors`, `secrets`, `skills`,
+`kortix_permissions` — and v2 is deny-by-default. The marketplace treats that
+grant as the agent's capability manifest:
+
+```jsonc
+"meta": {
+  "agent": {
+    "connectors": ["linear"],
+    "secrets": ["LINEAR_API_KEY"],
+    "skills": ["triage-rules"],
+    "kortix_permissions": []
+  }
+}
+```
+
+- The catalog derives the grant from `meta.agent` (merged with
+  `meta.capabilities` + `envVars`), else from the sibling `registry:template`
+  that installs the agent (`meta.template.agents.<name>`), else it is empty.
+  Source: `apps/api/src/marketplace/agent-profile.ts`.
+- `GET /v1/marketplace/items/:id` returns it as `agent.governance`, plus the
+  exact `agents:` block as `agent.governanceYaml`.
+- A marketplace agent never receives `all`. Each connector, secret, skill, and
+  permission is named, so each one can be reviewed.
+- The gallery's "Add to project" shows one checkbox per grant. The install
+  session receives only the checked set (`grants` on
+  `POST /v1/projects/:id/marketplace/install-session`); the server rejects any
+  value the agent does not declare, so approval can only narrow the grant.
+
 ### 5.2 Containment is the backstop
 
 Capabilities are declared, but **enforcement leans on what's already true**: a

@@ -101,3 +101,18 @@ test('createMarketplaceInstallSession starts a typed project install session', a
   expect(last().body).toEqual({ id: 'kortix:researcher' });
   expect(result.session_id).toBe('session-1');
 });
+
+test('createMarketplaceInstallSession sends the approved agent grants when given', async () => {
+  nextResponse = { status: 201, body: { session_id: 'session-2' } };
+  const grants = { connectors: ['linear'], secrets: [], skills: ['triage-rules'] };
+  const result = await createMarketplaceInstallSession('project-1', 'acme:triage-agent', { grants });
+  expect(last().url).toContain('/projects/project-1/marketplace/install-session');
+  expect(last().body).toEqual({ id: 'acme:triage-agent', grants });
+  expect(result.session_id).toBe('session-2');
+});
+
+test('createMarketplaceInstallSession omits grants when options carry none', async () => {
+  nextResponse = { status: 201, body: { session_id: 'session-3' } };
+  await createMarketplaceInstallSession('project-1', 'acme:triage-agent', {});
+  expect(last().body).toEqual({ id: 'acme:triage-agent' });
+});

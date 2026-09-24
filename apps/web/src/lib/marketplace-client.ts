@@ -8,7 +8,10 @@ import {
   listMarketplaceSources as sdkListMarketplaceSources,
   listMarketplaces as sdkListMarketplaces,
   removeMarketplaceSource as sdkRemoveMarketplaceSource,
+  type MarketplaceInstallGrants,
 } from '@kortix/sdk';
+
+export type { MarketplaceInstallGrants };
 
 // Server-safe public reads live in a separate module (no api-client import) so
 // Server Components can call them. Re-exported here for existing client imports.
@@ -73,6 +76,30 @@ export interface ProjectTrigger {
   agent: string | null;
 }
 
+/** The kortix.yaml governance grant an agent asks for. Omitted = none. */
+export interface AgentGovernance {
+  connectors: string[];
+  secrets: string[];
+  skills: string[];
+  kortix_permissions: string[];
+}
+
+/** A `registry:agent` item's profile (server-derived — see the API's
+ *  `marketplace/agent-profile.ts`). */
+export interface MarketplaceAgentDetail {
+  /** The `agents:` key in kortix.yaml and the `.md` filename. */
+  name: string;
+  file: string | null;
+  frontmatter: Record<string, unknown>;
+  prompt: string | null;
+  governance: AgentGovernance;
+  /** `declared` by the item, read from its use-case `template`, or `none`. */
+  governanceSource: 'declared' | 'template' | 'none';
+  templateId?: string;
+  /** The exact `agents:` block the install adds to kortix.yaml. */
+  governanceYaml: string;
+}
+
 export interface MarketplaceItemDetail extends MarketplaceItem {
   files: Array<{ target: string; type: string }>;
   readme: string | null;
@@ -80,6 +107,8 @@ export interface MarketplaceItemDetail extends MarketplaceItem {
   /** For a `registry:project`: its agents + triggers (parsed from kortix.yaml). */
   projectAgents?: ProjectAgent[];
   projectTriggers?: ProjectTrigger[];
+  /** For a `registry:agent`: its prompt, frontmatter, and governance grant. */
+  agent?: MarketplaceAgentDetail;
 }
 
 export interface InstallResult {
@@ -244,8 +273,9 @@ export async function getMarketplaceItemFile(
 export async function installMarketplaceItemAsSession(
   projectId: string,
   id: string,
+  grants?: MarketplaceInstallGrants,
 ): Promise<{ session_id: string }> {
-  return createMarketplaceInstallSession(projectId, id);
+  return createMarketplaceInstallSession(projectId, id, grants ? { grants } : undefined);
 }
 
 // ── "Add a marketplace" sources ─────────────────────────────────────────────

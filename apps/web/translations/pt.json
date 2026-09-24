@@ -18639,7 +18639,19 @@
       "textc53147a0d05b": "Não foi possível renderizar este diagrama",
       "text91aec62280a3": "Baixar SVG",
       "text751dfdcf3878": "Linha {value0}",
-      "text0a7b76552107": "Conta do conector renomeada"
+      "text0a7b76552107": "Conta do conector renomeada",
+      "text9ff64b83cc7c": "Habilidades e agentes",
+      "text40cc6b0da5a3": "Usar sua conexão {value0}",
+      "texte71987cb4f83": "Ler o segredo {value0}",
+      "text2feb0245036c": "Carregar a habilidade {value0}",
+      "textbaf0a7ae2251": "Usar a permissão Kortix {value0}",
+      "text19609ea23c43": "O que ele vai receber",
+      "text55ee9aa25faf": "Sem conectores, segredos, habilidades ou permissões. As concessões são negadas por padrão.",
+      "text926c86e3d187": "Adicionado ao kortix.yaml",
+      "text23d4a7a67032": "Revise o que este agente recebe",
+      "text346ba794a80f": "Desmarque o que você não quer conceder. O agente é adicionado apenas com os itens marcados.",
+      "text229efc8f5263": "Permissão",
+      "text961e15b7f263": "Não foi possível carregar o prompt da origem."
     }
   },
   "projectOnboarding": {

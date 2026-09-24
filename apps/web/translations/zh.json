@@ -18639,7 +18639,19 @@
       "textc53147a0d05b": "无法渲染此图表",
       "text91aec62280a3": "下载 SVG",
       "text751dfdcf3878": "第 {value0} 行",
-      "text0a7b76552107": "已重命名连接器账户"
+      "text0a7b76552107": "已重命名连接器账户",
+      "text9ff64b83cc7c": "技能和 Agents",
+      "text40cc6b0da5a3": "使用你的 {value0} 连接",
+      "texte71987cb4f83": "读取密钥 {value0}",
+      "text2feb0245036c": "加载技能 {value0}",
+      "textbaf0a7ae2251": "使用 Kortix 权限 {value0}",
+      "text19609ea23c43": "它将获得的权限",
+      "text55ee9aa25faf": "没有连接器、密钥、技能或权限。授权默认拒绝。",
+      "text926c86e3d187": "添加到 kortix.yaml",
+      "text23d4a7a67032": "检查此 Agent 将获得的权限",
+      "text346ba794a80f": "取消勾选你不想授予的项目。Agent 只会获得已勾选的项目。",
+      "text229efc8f5263": "权限",
+      "text961e15b7f263": "无法从来源加载提示词。"
     }
   },
   "projectOnboarding": {

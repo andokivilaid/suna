@@ -138,3 +138,35 @@ export function resolveMarketplaceTypeSectionTotal(
   const total = typeCounts[type.replace(/^registry:/, '')];
   return typeof total === 'number' ? total : localCount;
 }
+
+/** Item types the explore grid offers as a browse facet, in display order.
+ *  Mirrors the API's browseable types minus projects (their own showcase). */
+export const MARKETPLACE_BROWSE_TYPES = ['registry:skill', 'registry:agent'] as const;
+
+/** The browse facets to show: each `MARKETPLACE_BROWSE_TYPES` entry that has
+ *  items, either in the loaded page or in the source summaries' type counts
+ *  (so agents get a section even when the SSR-bounded first page has none). */
+export function marketplaceBrowseTypes(
+  presentTypes: Iterable<string>,
+  typeCounts: Record<string, number>,
+): string[] {
+  const present = new Set(presentTypes);
+  return MARKETPLACE_BROWSE_TYPES.filter(
+    (type) => present.has(type) || (typeCounts[type.replace(/^registry:/, '')] ?? 0) > 0,
+  );
+}
+
+/** `?type=agent` → `registry:agent`; anything that is not a browse type → `all`. */
+export function marketplaceTypeFromParam(param: string | null | undefined): string {
+  const type = `registry:${param ?? ''}`;
+  return (MARKETPLACE_BROWSE_TYPES as readonly string[]).includes(type) ? type : 'all';
+}
+
+/** Rewrite `href` so its `?type=` reflects `type` (short form), keeping every
+ *  other param. `all` removes it. */
+export function withMarketplaceTypeParam(href: string, type: string): string {
+  const url = new URL(href, 'http://local');
+  if (type === 'all') url.searchParams.delete('type');
+  else url.searchParams.set('type', type.replace(/^registry:/, ''));
+  return `${url.pathname}${url.search}`;
+}

@@ -18639,7 +18639,19 @@
       "textc53147a0d05b": "Impossibile visualizzare questo diagramma",
       "text91aec62280a3": "Scarica SVG",
       "text751dfdcf3878": "Riga {value0}",
-      "text0a7b76552107": "Account del connettore rinominato"
+      "text0a7b76552107": "Account del connettore rinominato",
+      "text9ff64b83cc7c": "Competenze e agenti",
+      "text40cc6b0da5a3": "Usare la tua connessione {value0}",
+      "texte71987cb4f83": "Leggere il segreto {value0}",
+      "text2feb0245036c": "Caricare la competenza {value0}",
+      "textbaf0a7ae2251": "Usare il permesso Kortix {value0}",
+      "text19609ea23c43": "Cosa otterrà",
+      "text55ee9aa25faf": "Nessun connettore, segreto, competenza o permesso. Gli accessi sono negati per impostazione predefinita.",
+      "text926c86e3d187": "Aggiunto a kortix.yaml",
+      "text23d4a7a67032": "Controlla cosa ottiene questo agente",
+      "text346ba794a80f": "Deseleziona ciò che non vuoi concedere. L’agente viene aggiunto solo con gli elementi selezionati.",
+      "text229efc8f5263": "Permesso",
+      "text961e15b7f263": "Impossibile caricare il prompt dalla sua origine."
     }
   },
   "projectOnboarding": {

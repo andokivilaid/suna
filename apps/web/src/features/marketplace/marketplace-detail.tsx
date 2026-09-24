@@ -28,6 +28,7 @@ import type {
 } from '@/lib/marketplace-client';
 import { marketplaceItemHref, marketplaceSourceHref } from '@/lib/marketplace-slug';
 import { AddToProjectModal } from './add-to-project-modal';
+import { MarketplaceAgentProfile } from './marketplace-agent-profile';
 import { MarketplaceAvatar } from './marketplace-avatar';
 import { displayCompanyLabel } from './marketplace-company-filter';
 import { MarketplaceExploreCard } from './marketplace-explore-card';
@@ -133,7 +134,7 @@ function BundleMemberRow({
 function ReadmeMarkdown({ content }: { content: string }) {
   return (
     <div className="bg-secondary rounded-md border p-4">
-      <div className="prose-sm text-foreground/90 max-w-none">
+      <div className="prose-sm text-foreground max-w-none">
         <UnifiedMarkdown content={content} allowHtml={false} />
       </div>
     </div>
@@ -174,7 +175,7 @@ function ExpandableText({ text }: { text: string }) {
       <p
         ref={ref}
         className={cn(
-          'text-foreground/90 text-sm leading-relaxed text-pretty',
+          'text-foreground text-sm leading-relaxed text-pretty',
           !expanded && 'line-clamp-5',
         )}
       >
@@ -276,7 +277,7 @@ function ItemSidebar({
               projectBannerClass(data.name || data.id),
             )}
           >
-            <Boxes className="text-foreground/60 size-7" aria-hidden />
+            <Boxes className="text-muted-foreground size-7" aria-hidden />
           </div>
         ) : (
           <MarketplaceItemAvatar item={data} size="lg" showSource={false} />
@@ -454,7 +455,7 @@ function DetailPager({ nav }: { nav: DetailNav }) {
           onClick={nav.onPrev}
           disabled={!nav.onPrev}
           aria-label={tI18nComplete.raw('text81b35f1b4332')}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted flex size-8 items-center justify-center rounded-full transition disabled:opacity-40 disabled:hover:bg-transparent"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted flex size-8 items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -466,7 +467,7 @@ function DetailPager({ nav }: { nav: DetailNav }) {
           onClick={nav.onNext}
           disabled={!nav.onNext}
           aria-label={tI18nComplete.raw('text1e47d4f7a1a3')}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted flex size-8 items-center justify-center rounded-full transition disabled:opacity-40 disabled:hover:bg-transparent"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted flex size-8 items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
         >
           <ChevronRight className="size-4" />
         </button>
@@ -519,8 +520,15 @@ export function MarketplaceDetail({
     return () => window.removeEventListener('keydown', onKey);
   }, [onPrev, onNext]);
 
-  const capGroups = groupCapabilities(data.capabilities, tI18nComplete);
-  const capCount = totalCapabilityCount(data.capabilities);
+  // An agent's connectors + secrets are its kortix.yaml grant, shown in the
+  // agent profile ("What it will get") — the generic section keeps only the
+  // tools/network it declares, so nothing is listed twice.
+  const agent = data.type === 'registry:agent' ? data.agent : undefined;
+  const genericCaps = agent
+    ? { ...data.capabilities, secrets: [], connectors: [] }
+    : data.capabilities;
+  const capGroups = groupCapabilities(genericCaps, tI18nComplete);
+  const capCount = totalCapabilityCount(genericCaps);
   const isProject = data.type === 'registry:project';
   const isBundle = data.type === 'registry:bundle' || isProject;
   const bundleMembers = isBundle
@@ -711,7 +719,8 @@ export function MarketplaceDetail({
             data={data}
             company={company}
             itemTitle={itemTitle}
-            fileTargets={fileTargets}
+            // An agent's single `.md` is rendered in full by its profile.
+            fileTargets={agent ? [] : fileTargets}
             selectedFile={selectedFile}
             onSelectFile={setSelectedFile}
           />
@@ -752,6 +761,8 @@ export function MarketplaceDetail({
                 </section>
               ))}
             </>
+          ) : agent ? (
+            <MarketplaceAgentProfile agent={agent} />
           ) : (
             <>
               {filesSection}

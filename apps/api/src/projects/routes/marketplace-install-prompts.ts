@@ -4,6 +4,13 @@
  * unit-tested without booting the API's env graph.
  */
 
+import {
+  AGENT_GRANT_KINDS,
+  governanceYaml,
+  type AgentGovernance,
+  type AgentGrantKind,
+} from '../../marketplace/agent-profile';
+
 interface TemplateInputDecl {
   key: string;
   label?: string;
@@ -166,4 +173,114 @@ export function buildTemplateInstallPrompt(entry: TemplateCatalogEntry, id: stri
     '',
     ...steps.map((s, i) => `${i + 1}. ${s}`),
   ].join('\n');
+}
+
+interface AgentInstallInput {
+  /** Catalog id of the agent item (`<registry>:<name>`). */
+  id: string;
+  item: {
+    name: string;
+    title?: string;
+    description?: string | null;
+    files?: Array<{ path: string; target?: string; content?: string | null }>;
+  };
+  profile: { name: string; file: string | null; governance: AgentGovernance };
+  /** The grant the user approved in the capability review (a subset of
+   *  `profile.governance`, validated by the route). */
+  approved: AgentGovernance;
+}
+
+const GRANT_NOUN: Record<AgentGrantKind, string> = {
+  connectors: 'connector',
+  secrets: 'secret',
+  skills: 'skill',
+  kortix_permissions: 'Kortix permission',
+};
+
+/** Agent-driven install of a `registry:agent` into THIS project, bound to the
+ *  capability set the user approved: the session writes the agent file, adds
+ *  EXACTLY the approved kortix.yaml grant (never wider, never `all`), installs
+ *  the approved skills, mints setup links for approved secrets/connectors, and
+ *  opens a change request. */
+export function buildAgentInstallPrompt(input: AgentInstallInput): string {
+  const { id, item, profile, approved } = input;
+  const title = item.title ?? item.name;
+  const namespace = id.includes(':') ? id.slice(0, id.indexOf(':')) : '';
+  const repoPath = `.kortix/opencode/agents/${profile.name}.md`;
+  const file = (item.files ?? []).find((f) => (f.target ?? f.path) === profile.file);
+  const inline = typeof file?.content === 'string' ? file.content : null;
+
+  const declined: string[] = [];
+  for (const kind of AGENT_GRANT_KINDS) {
+    for (const value of profile.governance[kind]) {
+      if (!approved[kind].includes(value)) declined.push(`${GRANT_NOUN[kind]} \`${value}\``);
+    }
+  }
+
+  const lines: string[] = [
+    `Add the "${title}" agent to THIS project, with exactly the capabilities I approved.`,
+    '',
+    item.description ?? '',
+    '',
+  ];
+
+  if (inline != null) {
+    lines.push(
+      `The agent file (marketplace item "${id}"). Write it to \`${repoPath}\`, rendering \`{{projectName}}\` to this project's name:`,
+      '',
+      '```markdown',
+      inline,
+      '```',
+    );
+  } else {
+    const fileTarget = profile.file ?? `@agents/${profile.name}.md`;
+    lines.push(
+      `Fetch the agent file (marketplace item "${id}") from \`GET $KORTIX_API_URL/marketplace/items/${encodeURIComponent(id)}/file?path=${encodeURIComponent(fileTarget)}\` (the \`.content\` field). Write it to \`${repoPath}\`, rendering \`{{projectName}}\` to this project's name.`,
+    );
+  }
+
+  lines.push(
+    '',
+    `Add exactly this entry under \`agents:\` in this project's kortix.yaml:`,
+    '',
+    '```yaml',
+    governanceYaml(profile.name, approved).trimEnd(),
+    '```',
+    '',
+    'Grants are deny-by-default: a kind that is not listed means none. Do not add any connector, secret, skill, or permission that is not listed above. Never use `all`.',
+  );
+
+  if (declined.length) {
+    lines.push(
+      '',
+      `I declined: ${declined.join(', ')}. Do not grant them. Tell me in one line what the agent cannot do without them.`,
+    );
+  }
+
+  const steps: string[] = [
+    `Read this project's kortix.yaml and \`.kortix/opencode/agents/\`. If an agent named \`${profile.name}\` already exists, stop and ask me what to do — do not overwrite it or merge into its grant.`,
+    `Write the agent file and add the kortix.yaml entry above. Leave \`default_agent\` and every other agent untouched.`,
+  ];
+  if (approved.skills.length) {
+    const skillIds = approved.skills.map((s) => `\`${namespace ? `${namespace}:${s}` : s}\``);
+    steps.push(
+      `Install each approved skill that is not already in \`.kortix/opencode/skills/\`: ${skillIds.join(', ')}. \`kortix marketplace show <id> --json\` lists its \`.files[].target\`; write each file to its conventional path (\`@skills/y\` → \`.kortix/opencode/skills/y\`).`,
+    );
+  }
+  const needs = [
+    ...approved.secrets.map((s) => `secret ${s}`),
+    ...approved.connectors.map((c) => `connector ${c}`),
+  ];
+  if (needs.length) {
+    steps.push(
+      `Walk me through connecting ${needs.join(', ')}. Mint setup links with the \`request_secret\` / \`connect\` tools (or \`kortix secrets request\` / \`kortix connectors link\`) — never ask me to paste a raw key.`,
+    );
+  }
+  steps.push(
+    'Open a change request with the result — do not push directly to the default branch.',
+    'Tell me in one line what the agent does and how to start a session with it.',
+  );
+
+  lines.push('', 'Steps:', ...steps.map((step, i) => `${i + 1}. ${step}`));
+  return lines.join('\n');
 }

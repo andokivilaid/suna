@@ -212,6 +212,17 @@ which installs an item onto a project.
 | `marketplaces()` · `featured()` | all · featured marketplaces |
 | `sources.list()` · `sources.add(input)` · `sources.remove(id)` | list · add · remove a source |
 
+`items({ type: 'agent' })` lists agents. An agent's `item(id)` carries `agent`:
+its frontmatter, prompt, kortix.yaml grant (`governance`), and the exact
+`agents:` block the install adds (`governanceYaml`).
+
+Install an item into a project with the standalone
+`createMarketplaceInstallSession(projectId, itemId, { grants? })`. It starts an
+agent session that opens a change request, and returns `{ session_id }`. For an
+agent, `grants` (`MarketplaceInstallGrants`) is the approved subset of its
+grant; omitted kinds grant nothing, and a value the agent does not declare
+returns `400`. Omit `grants` to approve the full declared grant.
+
 ### The project handle — `kortix.project(id)`
 
 Binds the project id; every sub-resource hangs off it.
