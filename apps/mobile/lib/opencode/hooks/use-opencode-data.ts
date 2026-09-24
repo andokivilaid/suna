@@ -380,39 +380,6 @@ export function useUpdateOpenCodeConfig(sandboxUrl: string | undefined) {
 
 // ─── MCP Mutations ──────────────────────────────────────────────────────────
 
-export interface AddMcpServerParams {
-  name: string;
-  type: 'local' | 'remote';
-  command?: string[];
-  env?: Record<string, string>;
-  url?: string;
-  headers?: Record<string, string>;
-}
-
-export function useAddMcpServer(sandboxUrl: string | undefined) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (params: AddMcpServerParams) => {
-      if (!sandboxUrl) throw new Error('No sandbox URL');
-      const config: Record<string, unknown> = { type: params.type };
-      if (params.type === 'local') {
-        config.command = params.command;
-        if (params.env && Object.keys(params.env).length > 0) config.environment = params.env;
-      } else {
-        config.url = params.url;
-        if (params.headers && Object.keys(params.headers).length > 0) config.headers = params.headers;
-      }
-      return opencodeFetch<Record<string, McpStatus>>(sandboxUrl, '/mcp', {
-        method: 'POST',
-        body: JSON.stringify({ name: params.name, config }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: opencodeKeys.mcpStatus(sandboxUrl || '') });
-    },
-  });
-}
-
 export function useConnectMcpServer(sandboxUrl: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({

@@ -185,7 +185,20 @@ KORTIX_REPO_URL=
 KORTIX_BRANCH_NAME=
 KORTIX_GITHUB_TOKEN=
 KORTIX_TOKEN=
+KORTIX_OPENCODE_WEDGE_KILL=1              # 0|false: never SIGKILL an HTTP-unresponsive opencode (gate-only, pre-2026-09 behaviour)
+KORTIX_OPENCODE_WEDGE_KILL_AFTER_MS=60000 # continuous unresponsiveness before the wedge kill; 5 min cooldown between kills
 ```
+
+### Wedged OpenCode recovery
+
+The readiness loop probes the live opencode every 5 s. After 3 failed probes
+the daemon marks it `starting`, and the proxy answers 503. When BOTH the
+`/session` probe and the Instance-independent `/kortix-liveness-probe` fail
+for 60 s (at least 3 probes), the daemon SIGKILLs the opencode process group.
+The ordinary exit path then respawns it and finalizes the orphaned turn. The
+daemon logs `[opencode] wedge-kill` with `unresponsiveMs`, `failures`, and
+`kills`. `GET /kortix/diag` reports `opencode.wedge_kill`
+(`kills`, `lastKillAt`, `unresponsiveMs`, `enabled`).
 
 ## Build
 

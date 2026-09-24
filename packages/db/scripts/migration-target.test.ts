@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { migrationCheckOrder, migrationBootstrapsPrerequisites } from './migration-target';
+import { assertBootstrapTarget, migrationCheckOrder, migrationBootstrapsPrerequisites } from './migration-target';
 
 describe('migration target mode', () => {
   test('keeps migration ordering strict for normal commands', () => {
@@ -34,5 +34,35 @@ describe('migration target mode', () => {
     expect(migrationBootstrapsPrerequisites('bootstrap')).toBe(true);
     expect(migrationBootstrapsPrerequisites('up')).toBe(false);
     expect(migrationBootstrapsPrerequisites('status')).toBe(false);
+  });
+
+  test('allows bootstrap on loopback and the self-host supabase-db host', () => {
+    for (const url of [
+      'postgresql://user:pass@127.0.0.1:5432/app',
+      'postgresql://user:pass@localhost:5432/app',
+      'postgresql://user:pass@[::1]:5432/app',
+      'postgresql://postgres:pass@supabase-db:5432/postgres',
+    ]) {
+      expect(() => assertBootstrapTarget('bootstrap', url, false)).not.toThrow();
+    }
+  });
+
+  test('refuses bootstrap against a remote database without --allow-remote', () => {
+    expect(() => assertBootstrapTarget('bootstrap', 'postgresql://user:pass@db.example.com:5432/app', false)).toThrow(
+      'bootstrap refuses non-local database host: db.example.com (pass --allow-remote to run it anyway)',
+    );
+    expect(() => assertBootstrapTarget('bootstrap', 'not-a-url', false)).toThrow(
+      'bootstrap requires a valid DATABASE_URL',
+    );
+  });
+
+  test('--allow-remote permits bootstrap against a remote database', () => {
+    expect(() => assertBootstrapTarget('bootstrap', 'postgresql://user:pass@db.example.com:5432/app', true)).not.toThrow();
+  });
+
+  test('the bootstrap guard ignores every other command', () => {
+    for (const cmd of ['up', 'status', 'down', 'fake']) {
+      expect(() => assertBootstrapTarget(cmd, 'postgresql://user:pass@db.example.com:5432/app', false)).not.toThrow();
+    }
   });
 });

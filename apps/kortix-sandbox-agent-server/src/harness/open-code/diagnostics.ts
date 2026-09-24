@@ -308,6 +308,9 @@ async function readOpenCodeDiagnosticReport(
       port_pair: [cfg.opencodeInternalPort, cfg.opencodeStandbyPort],
       session_id: bootState.initialOpenCodeSessionId ?? null,
       log_file: opencodeLog,
+      // Daemon-initiated SIGKILLs of an HTTP-unresponsive opencode (see
+      // nextWedgeAction). Non-zero means this box recovered from a wedge.
+      wedge_kill: opencode.getWedgeKillStats?.() ?? null,
     },
     boot: {
       repo_materialization_error: bootState.repoMaterializationError,

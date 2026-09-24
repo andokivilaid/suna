@@ -577,7 +577,14 @@ replication and migration administration.
 
 ## Target preparation
 
-1. Run the fresh-project bootstrap.
+1. Run the fresh-project bootstrap. `bootstrap` refuses every host except
+   loopback and `supabase-db` unless you pass `--allow-remote`:
+
+   ```bash
+   DATABASE_URL='<target session-pooler URL>?uselibpqcompat=true' \
+     bun packages/db/scripts/migrate.ts bootstrap --allow-remote
+   ```
+
 2. Apply the repository migration ledger with `pnpm migrate`.
 3. Verify every migration on PostgreSQL 17.6.
 4. Verify all required extensions, functions, triggers, RLS policies, grants,

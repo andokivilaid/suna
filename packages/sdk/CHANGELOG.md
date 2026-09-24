@@ -37,6 +37,11 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `FEATURE_FLAG_KEYS` and `KortixProject.experimental`, and
   `updateFeatureFlag(id, 'review_center', …)` answers `400`. Removed in the next
   major.
+- `useAddMcpServer` (`@kortix/sdk/react`). OpenCode's `POST /mcp` keeps the
+  server in process memory only, so it is lost on the next OpenCode or sandbox
+  restart. Use `createConnector(projectId, { provider: 'mcp', … })` (or
+  `kortix.project(id).connectors.create`), with `discoverConnectorAuth` for
+  OAuth detection. Removed in the next major.
 
 ### Fixed
 - `getPlatformUrl()` no longer reads a bare `process.env`, which threw a

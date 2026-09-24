@@ -16,6 +16,8 @@ import { join } from 'node:path';
  *   bun scripts/migrate.ts down [--count=N]   roll back N (default 1)
  *   bun scripts/migrate.ts fake               mark pending as applied without running (baseline)
  *   bun scripts/migrate.ts bootstrap          fresh-DB: install non-kortix prereqs, then `up`
+ *                                             (loopback or supabase-db only; add --allow-remote
+ *                                             for a deliberate remote target)
  *   bun scripts/migrate.ts local-up           loopback-only; tolerate cross-worktree ledger order
  *   bun scripts/migrate.ts preview-up         preview-only; tolerate persistent branch ledger order
  *
@@ -34,7 +36,7 @@ import {
 import { repairLocalWarmSessionIndex } from './local-warm-session-index-repair';
 import { withMigrationDeadlockRetry } from './migration-retry';
 import { materializeMigrationRuntimeDirectory } from './migration-runtime-overrides';
-import { migrationBootstrapsPrerequisites, migrationCheckOrder } from './migration-target';
+import { assertBootstrapTarget, migrationBootstrapsPrerequisites, migrationCheckOrder } from './migration-target';
 
 const MIGRATIONS_DIR = join(import.meta.dir, '..', 'migrations');
 const BOOTSTRAP_SQL = join(import.meta.dir, '..', 'drizzle', '0000_bootstrap.sql');
@@ -202,6 +204,7 @@ async function selfHostBootstrapIfFresh(databaseUrl: string): Promise<void> {
 async function main() {
   const [cmd = 'up', ...rest] = process.argv.slice(2);
   const databaseUrl = resolveUrl(rest);
+  assertBootstrapTarget(cmd, databaseUrl, rest.includes('--allow-remote'));
   const checkOrder = migrationCheckOrder(cmd, databaseUrl, process.env.KORTIX_PREVIEW_MIGRATION);
   const countArg = rest.find((a) => a.startsWith('--count='))?.slice('--count='.length);
   const runtimeMigrations = materializeMigrationRuntimeDirectory(MIGRATIONS_DIR);

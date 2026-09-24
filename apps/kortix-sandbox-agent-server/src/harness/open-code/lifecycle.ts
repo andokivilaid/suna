@@ -96,6 +96,37 @@ const READY_LIVENESS_MS = 5_000
 // both recovery and a genuine wedge are detected quickly.
 const READY_LIVENESS_DOWNGRADE_THRESHOLD = 3
 const READY_LIVENESS_RECHECK_MS = 2_000
+// Wedge kill. The downgrade above only GATES a wedged opencode off (proxy.ts
+// 503s); it never replaces it, and respawn runs only on process exit. So an
+// opencode whose process is alive but whose HTTP server no longer answers
+// (event loop stuck, SIGSTOP, deadlock) stayed wedged until a manual
+// /kortix/refresh or a box stop. The readiness loop now SIGKILLs such a child
+// once BOTH the session probe and the Instance-independent liveness probe have
+// failed continuously for WEDGE_KILL_AFTER_MS; the ordinary exit handler then
+// respawns it and finalizes the orphaned turn. See nextWedgeAction.
+const WEDGE_KILL_AFTER_MS = 60_000
+const WEDGE_KILL_COOLDOWN_MS = 5 * 60_000
+const WEDGE_KILL_MIN_FAILURES = READY_LIVENESS_DOWNGRADE_THRESHOLD
+// A gap this long between two probe results means the daemon itself was not
+// running (warm-seed snapshot/restore, VM pause): the wall clock jumped, and
+// that time is not evidence opencode was unresponsive.
+const WEDGE_MAX_PROBE_GAP_MS = 30_000
+
+/**
+ * Kill switch: KORTIX_OPENCODE_WEDGE_KILL=0 (or `false`) disables the wedge
+ * kill and restores the old gate-only behaviour. Read on every probe, so a
+ * changed env takes effect without a daemon restart.
+ */
+export function wedgeKillEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = (env.KORTIX_OPENCODE_WEDGE_KILL ?? '1').trim().toLowerCase()
+  return raw !== '0' && raw !== 'false'
+}
+
+/** KORTIX_OPENCODE_WEDGE_KILL_AFTER_MS overrides WEDGE_KILL_AFTER_MS. */
+export function wedgeKillAfterMs(env: NodeJS.ProcessEnv = process.env): number {
+  const parsed = Number.parseInt((env.KORTIX_OPENCODE_WEDGE_KILL_AFTER_MS ?? '').trim(), 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : WEDGE_KILL_AFTER_MS
+}
 
 const OPENCODE_DATA_HOME = `${OPENCODE_HOME}/.local/share`
 const OPENCODE_AUTH_PATH = `${OPENCODE_DATA_HOME}/opencode/auth.json`
@@ -1563,6 +1594,98 @@ export function nextLivenessState(input: LivenessDecisionInput): LivenessDecisio
   return { state: 'starting', consecutiveFailures: 0, downgraded: false }
 }
 
+/** The wedge watch carried between two readiness-loop probes. */
+export interface WedgeWatch {
+  /** Epoch ms when the current unbroken run of unresponsive probes began. */
+  unresponsiveSince: number | null
+  /** Unresponsive probes in the current run. */
+  failures: number
+  /** Epoch ms of the previous probe result, to detect a wall-clock jump. */
+  lastObservedAt: number | null
+}
+
+export const EMPTY_WEDGE_WATCH: WedgeWatch = { unresponsiveSince: null, failures: 0, lastObservedAt: null }
+
+export interface WedgeDecisionInput {
+  watch: WedgeWatch
+  /** The primary probe (`/session`, or the liveness route while the gate is closed) got no HTTP answer. */
+  probeFailed: boolean
+  /** The Instance-independent `/kortix-liveness-probe` also got no HTTP answer. */
+  livenessProbeFailed: boolean
+  /** Epoch ms of the last wedge kill in this lifecycle, or null. */
+  lastKillAt: number | null
+  now: number
+  enabled: boolean
+  thresholdMs: number
+  cooldownMs: number
+  minFailures: number
+  maxProbeGapMs: number
+}
+
+export type WedgeDecisionReason = 'responsive' | 'disabled' | 'below-threshold' | 'cooldown' | 'wedged'
+
+export interface WedgeDecision {
+  watch: WedgeWatch
+  kill: boolean
+  reason: WedgeDecisionReason
+  /** Length of the current unresponsive run at `now` (0 when responsive). */
+  unresponsiveMs: number
+}
+
+/**
+ * Decide whether a supervised opencode is wedged and must be killed. Pure +
+ * deterministic — see opencode-wedge-kill.test.ts.
+ *
+ * - Any HTTP answer (either probe) means the process is alive: reset.
+ * - Unresponsive = BOTH probes failed. A slow `/session` alone is a busy
+ *   Instance, not a wedged process.
+ * - Kill only when the run is at least `thresholdMs` long AND holds at least
+ *   `minFailures` probes, and no kill happened in the last `cooldownMs`.
+ * - A gap above `maxProbeGapMs` between two results restarts the run: the
+ *   daemon was frozen with its child (snapshot restore), so the elapsed wall
+ *   time is not evidence.
+ * - A kill resets the run, so the respawned child gets a full window.
+ */
+export function nextWedgeAction(input: WedgeDecisionInput): WedgeDecision {
+  const { watch, now } = input
+  if (!input.probeFailed || !input.livenessProbeFailed) {
+    return {
+      watch: { unresponsiveSince: null, failures: 0, lastObservedAt: now },
+      kill: false,
+      reason: 'responsive',
+      unresponsiveMs: 0,
+    }
+  }
+  const jumped = watch.lastObservedAt !== null && now - watch.lastObservedAt > input.maxProbeGapMs
+  const unresponsiveSince = jumped || watch.unresponsiveSince === null ? now : watch.unresponsiveSince
+  const failures = jumped ? 1 : watch.failures + 1
+  const next: WedgeWatch = { unresponsiveSince, failures, lastObservedAt: now }
+  const unresponsiveMs = now - unresponsiveSince
+  if (!input.enabled) return { watch: next, kill: false, reason: 'disabled', unresponsiveMs }
+  if (failures < input.minFailures || unresponsiveMs < input.thresholdMs) {
+    return { watch: next, kill: false, reason: 'below-threshold', unresponsiveMs }
+  }
+  if (input.lastKillAt !== null && now - input.lastKillAt < input.cooldownMs) {
+    return { watch: next, kill: false, reason: 'cooldown', unresponsiveMs }
+  }
+  return {
+    watch: { unresponsiveSince: null, failures: 0, lastObservedAt: now },
+    kill: true,
+    reason: 'wedged',
+    unresponsiveMs,
+  }
+}
+
+export interface WedgeKillStats {
+  /** Wedge kills since this lifecycle was created. */
+  kills: number
+  /** ISO time of the last wedge kill, or null. */
+  lastKillAt: string | null
+  /** Current unresponsive run length in ms (0 when responsive). */
+  unresponsiveMs: number
+  enabled: boolean
+}
+
 export type Opencode = HarnessLifecycleService & {
   reloadConfig(opts?: { mustRespawn?: boolean }): Promise<ReloadConfigResult>
   /**
@@ -1614,6 +1737,11 @@ export type Opencode = HarnessLifecycleService & {
    * then is never answered. Every boot-time request waits for this first.
    */
   waitForCurrentListening(): Promise<void>
+  /**
+   * Wedge-kill counters for diagnostics (see nextWedgeAction). Optional so
+   * partial test doubles of `Opencode` stay valid.
+   */
+  getWedgeKillStats?(): WedgeKillStats
 }
 
 export interface OpencodeLifecycleOptions {
@@ -1665,6 +1793,19 @@ export interface OpencodeLifecycleOptions {
    * and would say it to people whose work completed normally.
    */
   onUnplannedRespawn?: () => void | Promise<boolean | void>
+  /** Test override for READY_LIVENESS_MS (the healthy liveness interval). */
+  readyLivenessMs?: number
+  /**
+   * Test overrides for the wedge kill. Production reads `enabled` and
+   * `thresholdMs` from KORTIX_OPENCODE_WEDGE_KILL(_AFTER_MS).
+   */
+  wedgeKill?: {
+    enabled?: boolean
+    thresholdMs?: number
+    cooldownMs?: number
+    minFailures?: number
+    probeTimeoutMs?: number
+  }
 }
 
 export function createOpencodeLifecycle(
@@ -1693,6 +1834,12 @@ export function createOpencodeLifecycle(
   let state: OpencodeState = 'starting'
   /** Consecutive failed liveness probes while `ok` (see nextLivenessState). */
   let livenessFailures = 0
+  // Wedge watch (see nextWedgeAction), scoped to the child it observed.
+  let wedgeWatch: WedgeWatch = EMPTY_WEDGE_WATCH
+  let wedgeWatchedChild: ChildProcess | null = null
+  let wedgeKills = 0
+  let lastWedgeKillAt: number | null = null
+  let wedgeCooldownLogged = false
   let readinessTimer: ReturnType<typeof setTimeout> | null = null
   let firstReadyResponseReported = false
   let firstListeningResponseReported = false
@@ -2320,7 +2467,7 @@ export function createOpencodeLifecycle(
       state === 'ok'
         ? livenessFailures > 0
           ? READY_LIVENESS_RECHECK_MS
-          : READY_LIVENESS_MS
+          : (options.readyLivenessMs ?? READY_LIVENESS_MS)
         : READY_POLL_MS
     readinessTimer = setTimeout(async () => {
       if (stopping) return
@@ -2378,8 +2525,90 @@ export function createOpencodeLifecycle(
         }
         state = decision.state
       }
+      if (probedChild && (await observeWedge(probedChild, probedPort, probe === 'down'))) return
       scheduleReadinessProbe()
     }, interval)
+  }
+
+  /**
+   * Feed one readiness-loop result into the wedge watch, and SIGKILL the child
+   * when nextWedgeAction says it is wedged. Returns true when the loop must
+   * stop this tick (the lifecycle stopped, or the child changed under the
+   * extra probe) — the caller then schedules nothing; this function already
+   * rescheduled.
+   *
+   * Only a child that has already been heard from (`listeningProcess`) is
+   * watched: a process that never answered is a slow or failed boot, which the
+   * boot path owns. Verification candidates are never `child`, so they are
+   * never watched — the same exclusion `mayProbe` + the `probedChild !==
+   * child` guards give the readiness loop.
+   */
+  async function observeWedge(proc: ChildProcess, port: number, probeFailed: boolean): Promise<boolean> {
+    if (proc !== wedgeWatchedChild) {
+      wedgeWatch = EMPTY_WEDGE_WATCH
+      wedgeWatchedChild = proc
+    }
+    if (listeningProcess !== proc) return false
+    let livenessProbeFailed = probeFailed
+    if (probeFailed && directoryProbeOpen) {
+      // `/session` failing alone can be a busy Instance. Ask the route that
+      // creates no Instance whether the HTTP server itself still answers.
+      livenessProbeFailed = !(await probeOpencodeListening(
+        `http://127.0.0.1:${port}`,
+        options.wedgeKill?.probeTimeoutMs ?? 2_000,
+      ))
+      if (stopping) return true
+      if (proc !== child || port !== livePort()) {
+        scheduleReadinessProbe()
+        return true
+      }
+    }
+    const enabled = options.wedgeKill?.enabled ?? wedgeKillEnabled()
+    const decision = nextWedgeAction({
+      watch: wedgeWatch,
+      probeFailed,
+      livenessProbeFailed,
+      lastKillAt: lastWedgeKillAt,
+      now: Date.now(),
+      enabled,
+      thresholdMs: options.wedgeKill?.thresholdMs ?? wedgeKillAfterMs(),
+      cooldownMs: options.wedgeKill?.cooldownMs ?? WEDGE_KILL_COOLDOWN_MS,
+      minFailures: options.wedgeKill?.minFailures ?? WEDGE_KILL_MIN_FAILURES,
+      maxProbeGapMs: WEDGE_MAX_PROBE_GAP_MS,
+    })
+    // A kill resets the watch, so read the run's length before replacing it.
+    const failures = decision.kill ? wedgeWatch.failures + 1 : decision.watch.failures
+    wedgeWatch = decision.watch
+    if (decision.reason !== 'cooldown') wedgeCooldownLogged = false
+    else if (!wedgeCooldownLogged) {
+      wedgeCooldownLogged = true
+      logger.warn('[opencode] wedge-kill suppressed by cooldown', {
+        pid: proc.pid,
+        port,
+        unresponsiveMs: decision.unresponsiveMs,
+        lastKillAt: lastWedgeKillAt ? new Date(lastWedgeKillAt).toISOString() : null,
+      })
+    }
+    if (!decision.kill) return false
+    wedgeKills += 1
+    lastWedgeKillAt = Date.now()
+    // Structured, greppable: `[opencode] wedge-kill` is the one line that says
+    // the daemon replaced an opencode on its own.
+    logger.warn('[opencode] wedge-kill', {
+      reason: 'http-unresponsive',
+      pid: proc.pid,
+      port,
+      unresponsiveMs: decision.unresponsiveMs,
+      failures,
+      kills: wedgeKills,
+    })
+    // SIGKILL straight away: a wedged event loop cannot act on SIGTERM, and a
+    // SIGSTOPped process cannot receive it. Group kill, as stop() does, so no
+    // grandchild outlives it. The exit handler (superviseChild) sees
+    // `child === proc` with `stopping` false and runs scheduleUnplannedRespawn,
+    // which respawns and then calls onUnplannedRespawn to finalize the turn.
+    void killProcessGroup(proc, 'SIGKILL')
+    return false
   }
 
 
@@ -2636,6 +2865,15 @@ export function createOpencodeLifecycle(
 
     getPid() {
       return child?.pid ?? null
+    },
+
+    getWedgeKillStats(): WedgeKillStats {
+      return {
+        kills: wedgeKills,
+        lastKillAt: lastWedgeKillAt ? new Date(lastWedgeKillAt).toISOString() : null,
+        unresponsiveMs: wedgeWatch.unresponsiveSince === null ? 0 : Date.now() - wedgeWatch.unresponsiveSince,
+        enabled: options.wedgeKill?.enabled ?? wedgeKillEnabled(),
+      }
     },
 
     getActivePort() {
