@@ -86,6 +86,7 @@ describe('qk.project', () => {
       qk.project.triggers(id),
       qk.project.files(id),
       qk.project.fileSource(id, 'AGENTS.md'),
+      qk.project.knowledge(id),
       qk.project.branches(id),
       qk.project.policies(id),
       qk.project.executorPolicies(id),
