@@ -24,3 +24,24 @@ export function migrationCheckOrder(command: string, databaseUrl: string, previe
 export function migrationBootstrapsPrerequisites(command: string): boolean {
   return command === 'bootstrap' || command === 'local-up' || command === 'preview-up';
 }
+
+const LOCAL_BOOTSTRAP_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]', 'supabase-db']);
+
+/**
+ * `bootstrap` installs the non-kortix prerequisites (credit RPCs, a trigger on
+ * auth.users, a basejump stub) into a fresh database. That is right for the
+ * self-host compose stack (`supabase-db`) and a local database, and wrong for
+ * anything else reached by accident. Refuse any other host unless the operator
+ * passes `--allow-remote` (e.g. a deliberate fresh Supabase Cloud project).
+ */
+export function assertBootstrapTarget(command: string, databaseUrl: string, allowRemote: boolean): void {
+  if (command !== 'bootstrap') return;
+  let hostname: string;
+  try {
+    hostname = new URL(databaseUrl).hostname;
+  } catch {
+    throw new Error('bootstrap requires a valid DATABASE_URL');
+  }
+  if (LOCAL_BOOTSTRAP_HOSTS.has(hostname) || allowRemote) return;
+  throw new Error(`bootstrap refuses non-local database host: ${hostname} (pass --allow-remote to run it anyway)`);
+}
