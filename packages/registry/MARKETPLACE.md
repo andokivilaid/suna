@@ -98,6 +98,7 @@ The current Kortix-managed set is intentionally small:
 
 - `kortix-system`
 - `kortix-memory`
+- `kortix-knowledge`
 - `kortix-connectors`
 - `kortix-slack`
 - `kortix-computer`

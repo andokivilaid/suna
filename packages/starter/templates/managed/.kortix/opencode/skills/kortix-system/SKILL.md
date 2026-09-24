@@ -8,7 +8,7 @@ description: "Canonical reference for Kortix projects, Apps, the CLI, sessions, 
 <live-skills>
 The `kortix` CLI is the live source of truth for how Kortix works. The Kortix
 **system skills** — `kortix-system`, `kortix-apps`, `kortix-connectors`,
-`kortix-memory`, `kortix-harness-refinement`, `kortix-slack`,
+`kortix-memory`, `kortix-knowledge`, `kortix-harness-refinement`, `kortix-slack`,
 `kortix-computer`, `kortix-marketplace` — are
 served fresh by the CLI,
 so their instructions always match the platform version you're running on (no
@@ -23,7 +23,7 @@ skills are marketplace items. Browse them with
 `kortix marketplace list --type skill`.
 
 Before answering anything about Kortix internals — Apps, connectors and connections,
-project memory, Slack/channels, reaching a connected computer, or sending a
+project memory, project knowledge documents, Slack/channels, reaching a connected computer, or sending a
 notetaker into a meeting — load the matching skill with
 `kortix system-skills get <name>` and follow it. Prefer this over any stale
 local copy. The CLI reflects the deployed platform.

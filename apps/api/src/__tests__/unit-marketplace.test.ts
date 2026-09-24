@@ -191,6 +191,7 @@ describe('marketplace catalog', () => {
       'kortix-cli',
       'kortix-computer',
       'kortix-connectors',
+      'kortix-knowledge',
       'kortix-marketplace',
       'kortix-memory',
       'kortix-onboarding',
