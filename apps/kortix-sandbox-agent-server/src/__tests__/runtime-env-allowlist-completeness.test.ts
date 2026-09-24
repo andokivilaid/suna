@@ -88,6 +88,10 @@ const BOOT_ONLY_KORTIX_ENV_NAMES = new Set([
   // Manual operator debug toggle (checked against `process.env` directly, not
   // part of the env-sync contract at all).
   'KORTIX_OPENCODE_DEBUG',
+  // Daemon wedge-kill kill switch and threshold (nextWedgeAction). Operator
+  // tunables for the daemon's own supervision loop; opencode never reads them.
+  'KORTIX_OPENCODE_WEDGE_KILL',
+  'KORTIX_OPENCODE_WEDGE_KILL_AFTER_MS',
   // Artifact identity is fixed before PID 1 starts. A live update installs a
   // new artifact and daemon instead of changing this value through /env.
   'KORTIX_COMPILED_RUNTIME_FORMAT',
@@ -153,6 +157,8 @@ describe('OPENCODE_RUNTIME_ENV_NAMES — allowlist completeness', () => {
       'KORTIX_LLM_PROXY_URL',
       'KORTIX_OPENCODE_DEBUG',
       'KORTIX_OPENCODE_MODEL',
+      'KORTIX_OPENCODE_WEDGE_KILL',
+      'KORTIX_OPENCODE_WEDGE_KILL_AFTER_MS',
       'KORTIX_PROJECT_ID',
       'KORTIX_SECRET_CAPABILITIES',
       'KORTIX_TOKEN',
