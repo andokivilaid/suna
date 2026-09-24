@@ -679,6 +679,13 @@ Install is agent-driven: it starts a project session that clones the item,
 reads it, merges what fits, and opens a change request. There is no
 deterministic install/update/remove machinery.
 
+`kortix marketplace list --type agent` lists agents. Installing an agent adds
+its `.kortix/opencode/agents/<name>.md` file and an `agents.<name>` entry in
+kortix.yaml with the connectors, secrets, skills, and permissions it declares —
+`kortix marketplace show <id> --json` prints that grant as `.agent.governance`.
+To grant less, add the agent from the web marketplace and uncheck what you do
+not want.
+
 ### System skills
 
 The Kortix system skills are the platform's own documentation. They cover
