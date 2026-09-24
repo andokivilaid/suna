@@ -1,9 +1,11 @@
 /**
  * Marketplace install — project-scoped, agent-driven.
  *
- *   POST /:projectId/marketplace/install-session { id } → start a session that
- *     clones/reads the marketplace item's source and merges it into this
- *     project (skills/agents/tools/kortix.yaml), then opens a CR.
+ *   POST /:projectId/marketplace/install-session { id, grants? } → start a
+ *     session that clones/reads the marketplace item's source and merges it
+ *     into this project (skills/agents/tools/kortix.yaml), then opens a CR.
+ *     `grants` (agents only) is the capability set the user approved in the
+ *     install review — a subset of the agent's declared kortix.yaml grant.
  *
  * The deterministic install/lock/update/remove engine (registry-lock.json,
  * dependency resolution, hash-based update detection) has been removed — see
@@ -16,8 +18,10 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { manifestCandidatePaths } from '@kortix/manifest-schema';
 import { requireFeatureFlag } from '../../feature-flags/gate';
 import { isProjectSessionPrincipal } from '../../iam/agent-scope';
+import { validateAgentGrants } from '../../marketplace/agent-profile';
 import { getCatalogEntry } from '../../marketplace/catalog';
 import {
+  buildAgentInstallPrompt,
   buildRegistryProjectInstallPrompt,
   buildTemplateInstallPrompt,
 } from './marketplace-install-prompts';
@@ -96,13 +100,31 @@ async function handleMarketplaceInstallSession(c: any) {
   const entry = await getCatalogEntry(id);
   if (!entry) return c.json({ error: `Unknown item "${id}"` }, 400);
 
+  // `grants` is the capability set approved in the install review. Only an
+  // agent carries a kortix.yaml grant to narrow; approval can never widen it.
+  let approvedGrants: ReturnType<typeof validateAgentGrants> | null = null;
+  if (entry.agent) {
+    approvedGrants = validateAgentGrants(body?.grants, entry.agent.governance);
+    if (!approvedGrants.ok) return c.json({ error: approvedGrants.error }, 400);
+  } else if (body?.grants !== undefined) {
+    return c.json({ error: 'grants is only supported for registry:agent items' }, 400);
+  }
+
   const project = await loadGitProject(loaded);
   let prompt: string;
   try {
     // Whole projects get merged (judgment-heavy, guards the target's kortix.yaml);
-    // a use-case template renders inputs + wires its scheduled trigger; everything
-    // else is a straight install + setup.
-    if (entry.item.type === 'registry:project') {
+    // a use-case template renders inputs + wires its scheduled trigger; an agent
+    // lands with exactly the approved grant; everything else is a straight
+    // install + setup.
+    if (entry.agent && approvedGrants?.ok) {
+      prompt = buildAgentInstallPrompt({
+        id,
+        item: entry.item,
+        profile: entry.agent,
+        approved: approvedGrants.grants,
+      });
+    } else if (entry.item.type === 'registry:project') {
       prompt = buildRegistryProjectInstallPrompt(entry, await manifestRawOrNull(project));
     } else if (entry.item.type === 'registry:template') {
       prompt = buildTemplateInstallPrompt(entry, id);
@@ -121,7 +143,11 @@ async function handleMarketplaceInstallSession(c: any) {
     body: {
       initial_prompt: prompt,
       name: `Add ${entry.item.title ?? entry.item.name}`,
-      metadata: { kind: 'marketplace-install', item_id: id },
+      metadata: {
+        kind: 'marketplace-install',
+        item_id: id,
+        ...(approvedGrants?.ok ? { grants: approvedGrants.grants } : {}),
+      },
     },
     visibility: 'project',
     // Derive origin from the caller's token kind, same as POST /sessions (r7),

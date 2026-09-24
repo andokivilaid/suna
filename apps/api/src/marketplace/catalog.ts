@@ -38,6 +38,13 @@ import {
   type RegistryRef,
 } from "@kortix/registry";
 import type { MarketplaceSource } from "./sources-store";
+import {
+  deriveAgentProfile,
+  governanceYaml,
+  splitAgentMarkdown,
+  type AgentGovernance,
+  type AgentProfile,
+} from "./agent-profile";
 import { safeEgressFetch } from "../shared/ssrf-guard";
 
 export interface ItemCapabilities {
@@ -99,6 +106,25 @@ export interface ProjectTrigger {
   agent: string | null;
 }
 
+/** For a `registry:agent`: everything the detail view + capability review
+ *  need — the agent's frontmatter and prompt (from its `.md`), and the exact
+ *  kortix.yaml governance block the install adds. */
+export interface AgentDetail {
+  /** The `agents:` key in kortix.yaml and the `.md` filename. */
+  name: string;
+  /** Install target of the agent file (`@agents/<name>.md`). */
+  file: string | null;
+  frontmatter: Record<string, unknown>;
+  /** The agent's prompt (the `.md` body), or null when its source is unreachable. */
+  prompt: string | null;
+  governance: AgentGovernance;
+  governanceSource: AgentProfile["governanceSource"];
+  /** Catalog id of the use-case template the grant was read from. */
+  templateId?: string;
+  /** The `agents:` block the install adds to kortix.yaml, as YAML. */
+  governanceYaml: string;
+}
+
 export interface CatalogItemDetail extends CatalogItem {
   files: Array<{ target: string; type: string }>;
   readme: string | null;
@@ -114,6 +140,8 @@ export interface CatalogItemDetail extends CatalogItem {
   inputs?: unknown[];
   envVars?: Record<string, string>;
   template?: Record<string, unknown>;
+  /** For a `registry:agent`: its prompt, frontmatter, and governance grant. */
+  agent?: AgentDetail;
 }
 
 /** Parse a project item's `kortix.yaml` (+ each agent's own `.md` frontmatter)
@@ -181,6 +209,8 @@ export interface CatalogEntry {
   sourceUrl?: string;
   sourceId?: string;
   capabilities: ItemCapabilities;
+  /** For a `registry:agent`: its kortix.yaml name + declared governance grant. */
+  agent?: AgentProfile;
 }
 
 interface Catalog {
@@ -221,17 +251,31 @@ export function capabilitiesOf(item: RegistryItem): ItemCapabilities {
 function makeEntry(
   item: RegistryItem,
   registry: string,
+  siblings: readonly RegistryItem[],
   external?: RegistryRef,
   sourceUrl?: string,
   sourceId?: string,
 ): CatalogEntry {
+  const capabilities = capabilitiesOf(item);
+  if (item.type !== "registry:agent") {
+    return { item, registry, external, sourceUrl, sourceId, capabilities };
+  }
+  // An agent's governance grant IS its capability manifest: the connectors and
+  // secrets it will be granted in kortix.yaml surface on the card and in the
+  // install review, the same as a skill's declared capabilities.
+  const agent = deriveAgentProfile(item, siblings);
   return {
     item,
     registry,
     external,
     sourceUrl,
     sourceId,
-    capabilities: capabilitiesOf(item),
+    agent,
+    capabilities: {
+      ...capabilities,
+      secrets: [...new Set([...capabilities.secrets, ...agent.governance.secrets])],
+      connectors: [...new Set([...capabilities.connectors, ...agent.governance.connectors])],
+    },
   };
 }
 
@@ -671,7 +715,7 @@ function getBaseCatalog(): Catalog {
         reg.name === "kortix-projects"
           ? projectTemplateSourceUrl(item.name)
           : starterItemSourceUrl(item);
-      const entry = makeEntry(item, reg.name, undefined, sourceUrl);
+      const entry = makeEntry(item, reg.name, reg.items, undefined, sourceUrl);
       byId.set(id, entry);
       items.push(entryToCatalogItem(entry));
     }
@@ -1128,7 +1172,14 @@ function addRegistryToCatalog(
   for (const item of registry.registry.items ?? []) {
     const id = `${registryName}:${item.name}`;
     if (acc.byId.has(id)) continue;
-    const entry = makeEntry(item, registryName, ref, sourceUrl, sourceId);
+    const entry = makeEntry(
+      item,
+      registryName,
+      registry.registry.items ?? [],
+      ref,
+      sourceUrl,
+      sourceId,
+    );
     acc.byId.set(id, entry);
     acc.items.push(entryToCatalogItem(entry));
   }
@@ -1902,10 +1953,15 @@ type ItemQuery = { query?: string; type?: string; source?: string };
 // then runs the install as an agent session that reads the item's source and
 // opens a change request — there is no per-committed-file capability gate. So
 // widening this set never bypasses authz.
-// Agents/commands/bundles are still installable (the install engine handles
-// any type generically) but are hidden from browse for now — just Projects
-// (clone) and Skills (add) keeps the marketplace's taxonomy simple.
-const MARKETPLACE_VISIBLE_TYPES = new Set<string>(["registry:skill", "registry:project"]);
+// Commands/bundles are still installable (the install engine handles any type
+// generically) but are hidden from browse — Projects (clone), Skills (add), and
+// Agents (add, with a capability review of the kortix.yaml grant) are the
+// browse taxonomy. Use-case templates stay on the use-case pages.
+const MARKETPLACE_VISIBLE_TYPES = new Set<string>([
+  "registry:skill",
+  "registry:agent",
+  "registry:project",
+]);
 
 function isBrowseableCatalogItem(it: CatalogItem): boolean {
   // Kortix-managed system skills (kortix-system/connectors/memory/slack/computer/
@@ -1917,11 +1973,12 @@ function isBrowseableCatalogItem(it: CatalogItem): boolean {
 }
 
 /** Resolvable-by-id (detail + file fetch) but not necessarily browse-listed.
- *  Use-case templates and the agents they install stay OUT of the browse grid
- *  (that's the use-case pages' job), yet `kortix marketplace show <id>` /
- *  install-session must read them — so they resolve by id. Runbook skills are
- *  ordinary browseable items badged into the Use-case pack, so the web folds
- *  them under that tile. */
+ *  Use-case templates stay OUT of the browse grid (that's the use-case pages'
+ *  job), yet `kortix marketplace show <id>` / install-session must read them —
+ *  so they resolve by id. Agents are browseable, and a hidden agent still
+ *  resolves by id for the template install that references it. Runbook skills
+ *  are ordinary browseable items badged into the Use-case pack, so the web
+ *  folds them under that tile. */
 function isResolvableCatalogItem(it: CatalogItem): boolean {
   if (isBrowseableCatalogItem(it)) return true;
   return (
@@ -2155,6 +2212,8 @@ export async function getCatalogItemDetail(
         }
       : {};
 
+  const agent = entry.agent ? await agentDetailOf(entry, entry.agent) : undefined;
+
   return {
     ...base,
     files,
@@ -2163,6 +2222,37 @@ export async function getCatalogItemDetail(
     ...(projectAgents.length ? { projectAgents } : {}),
     ...(projectTriggers.length ? { projectTriggers } : {}),
     ...templateDecl,
+    ...(agent ? { agent } : {}),
+  };
+}
+
+/** Resolve an agent item's `.md` (inline for base items, raw-fetched for
+ *  external ones) into the detail view's frontmatter + prompt + grant. */
+async function agentDetailOf(
+  entry: CatalogEntry,
+  profile: AgentProfile,
+): Promise<AgentDetail> {
+  const file = (entry.item.files ?? []).find(
+    (f) => (f.target ?? f.path) === profile.file,
+  );
+  let raw: string | null = typeof file?.content === "string" ? file.content : null;
+  if (raw == null && file && entry.external) {
+    raw = await readExternalFile(entry, file.path ?? file.target!).catch(() => null);
+  }
+  const { frontmatter, prompt } = raw != null
+    ? splitAgentMarkdown(raw)
+    : { frontmatter: {}, prompt: null };
+  return {
+    name: profile.name,
+    file: profile.file,
+    frontmatter,
+    prompt,
+    governance: profile.governance,
+    governanceSource: profile.governanceSource,
+    ...(profile.templateName
+      ? { templateId: `${entry.registry}:${profile.templateName}` }
+      : {}),
+    governanceYaml: governanceYaml(profile.name, profile.governance),
   };
 }
 

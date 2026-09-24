@@ -26,6 +26,9 @@ const NOPE = '00000000-0000-4000-a000-000000000000';
 // pin as a fixture id.
 const KNOWN_ITEM_ID = 'kortix-starter:access-policy-skill';
 const KNOWN_ITEM_FILE_TARGET = '@skills/access-policy/SKILL.md';
+// A bundled use-case persona agent (packages/starter/templates/marketplace).
+// Its kortix.yaml grant comes from its sibling `ar-chaser` template.
+const KNOWN_AGENT_ID = 'kortix-starter:ar-chaser-agent';
 // One of the curated, vetted, public, read-only FEATURED_MARKETPLACES
 // addresses (apps/api/src/marketplace/catalog.ts) — any signed-in user may
 // add one of these without admin (see POST /sources's own comment), so it's
@@ -46,6 +49,23 @@ flow('MKTP-1', { domain: 'marketplace', routes: ['GET /v1/marketplace/items'] },
     const body = r.json();
     if (!Array.isArray(body.items) || body.items.length > 2) {
       throw new Error(`expected <=2 items with limit=2, got ${body.items?.length}`);
+    }
+  });
+  await ctx.step('filtered by type=agent → 200, only agents, includes the AR chaser agent', async () => {
+    const r = await ctx.client
+      .as(ctx.P.ANON)
+      .get('/v1/marketplace/items', { query: { type: 'agent' } });
+    r.status(200);
+    const body = r.json();
+    if (!Array.isArray(body.items) || body.items.length === 0) {
+      throw new Error('expected at least one browseable agent');
+    }
+    const wrong = body.items.filter((it: any) => it.type !== 'registry:agent');
+    if (wrong.length) throw new Error(`type=agent returned non-agents: ${wrong.map((it: any) => it.id)}`);
+    const agent = body.items.find((it: any) => it.id === KNOWN_AGENT_ID);
+    if (!agent) throw new Error(`expected "${KNOWN_AGENT_ID}" in type=agent results`);
+    if (!agent.capabilities?.connectors?.includes('stripe')) {
+      throw new Error('expected the agent card to carry its granted connector (stripe)');
     }
   });
   await ctx.step('filtered by query text → 200, matches', async () => {
@@ -75,6 +95,27 @@ flow(
         .exists('$.title')
         .exists('$.files')
         .exists('$.readme');
+    });
+    await ctx.step('agent item → 200 with prompt, frontmatter, and kortix.yaml grant', async () => {
+      const r = await ctx.client
+        .as(ctx.P.ANON)
+        .get('/v1/marketplace/items/:id', { params: { id: KNOWN_AGENT_ID } });
+      r.status(200)
+        .body()
+        .has('$.type', 'registry:agent')
+        .has('$.agent.name', 'ar-chaser')
+        .has('$.agent.file', '@agents/ar-chaser.md')
+        .has('$.agent.governanceSource', 'template')
+        .exists('$.agent.prompt')
+        .exists('$.agent.frontmatter')
+        .exists('$.agent.governanceYaml');
+      const agent = r.json().agent;
+      if (JSON.stringify(agent.governance.connectors) !== JSON.stringify(['stripe'])) {
+        throw new Error(`unexpected connectors grant: ${JSON.stringify(agent.governance)}`);
+      }
+      if (!agent.governanceYaml.includes('ar-chaser:')) {
+        throw new Error('governanceYaml must name the agent key');
+      }
     });
     await ctx.step('unknown item → 404', async () => {
       const r = await ctx.client
@@ -293,6 +334,40 @@ flow(
           { params: { projectId: p.id } },
         );
       r.status(400);
+    });
+    await ctx.step('agent with a grant it never declared → 400 (no session spawned)', async () => {
+      const r = await ctx.client
+        .as(ctx.P.OWNER)
+        .post(
+          '/v1/projects/:projectId/marketplace/install-session',
+          { id: KNOWN_AGENT_ID, grants: { secrets: ['NOT_DECLARED_KEY'] } },
+          { params: { projectId: p.id } },
+        );
+      r.status(400);
+      const error = String(r.json().error ?? '');
+      if (!error.includes('NOT_DECLARED_KEY')) {
+        throw new Error(`expected the undeclared grant in the error, got: ${error}`);
+      }
+    });
+    await ctx.step('agent with a malformed grants payload → 400 (no session spawned)', async () => {
+      const r = await ctx.client
+        .as(ctx.P.OWNER)
+        .post(
+          '/v1/projects/:projectId/marketplace/install-session',
+          { id: KNOWN_AGENT_ID, grants: { connectors: 'stripe' } },
+          { params: { projectId: p.id } },
+        );
+      r.status(400).body().has('$.error', 'grants.connectors must be an array of strings');
+    });
+    await ctx.step('grants on a non-agent item → 400 (no session spawned)', async () => {
+      const r = await ctx.client
+        .as(ctx.P.OWNER)
+        .post(
+          '/v1/projects/:projectId/marketplace/install-session',
+          { id: KNOWN_ITEM_ID, grants: { connectors: [] } },
+          { params: { projectId: p.id } },
+        );
+      r.status(400).body().has('$.error', 'grants is only supported for registry:agent items');
     });
     await ctx.step('NONMEMBER (no write access) → 403/404', async () => {
       const r = await ctx.client

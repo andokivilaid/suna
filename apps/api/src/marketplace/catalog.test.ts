@@ -36,14 +36,27 @@ function synthetic(count: number, overrides: (i: number) => Partial<CatalogItem>
   );
 }
 
-describe('template + agent resolution (decoupled from browse)', () => {
-  test('use-case templates + their agents are NOT surfaced in the browse list', () => {
+describe('template + agent resolution', () => {
+  test('use-case templates are NOT surfaced in the browse list, but agents are', () => {
     const mix = [
       item({ type: 'registry:template', name: 't', id: 'kortix-starter:t' }),
       item({ type: 'registry:agent', name: 'a', id: 'kortix-starter:a' }),
       item({ type: 'registry:skill', name: 's', id: 'kortix-starter:s' }),
     ];
-    expect(pageCatalogItems(mix, {}).items.map((i) => i.type)).toEqual(['registry:skill']);
+    expect(pageCatalogItems(mix, {}).items.map((i) => i.type)).toEqual([
+      'registry:agent',
+      'registry:skill',
+    ]);
+  });
+
+  test('type=agent (short or full form) narrows the browse list to agents', () => {
+    const mix = [
+      item({ type: 'registry:agent', name: 'a', id: 'acme:a' }),
+      item({ type: 'registry:skill', name: 's', id: 'acme:s' }),
+      item({ type: 'registry:agent', name: 'hidden', id: 'acme:hidden', hidden: true }),
+    ];
+    expect(pageCatalogItems(mix, { type: 'agent' }).items.map((i) => i.id)).toEqual(['acme:a']);
+    expect(pageCatalogItems(mix, { type: 'registry:agent' }).total).toBe(1);
   });
 
   test('but a template resolves by id and detail carries its full declaration', async () => {
@@ -60,6 +73,36 @@ describe('template + agent resolution (decoupled from browse)', () => {
     const agent = await getCatalogItemDetail('kortix-starter:support-agent');
     expect(agent).not.toBeNull();
     expect(agent!.type).toBe('registry:agent');
+  });
+
+  test('agent detail carries its prompt, frontmatter, and the kortix.yaml grant from its template', async () => {
+    const detail = await getCatalogItemDetail('kortix-starter:ar-chaser-agent');
+    expect(detail?.agent).toBeDefined();
+    const agent = detail!.agent!;
+    expect(agent.name).toBe('ar-chaser');
+    expect(agent.file).toBe('@agents/ar-chaser.md');
+    expect(agent.frontmatter.mode).toBe('primary');
+    expect(agent.prompt).toContain('accounts-receivable agent');
+    expect(agent.prompt!.startsWith('---')).toBe(false);
+    expect(agent.governanceSource).toBe('template');
+    expect(agent.templateId).toBe('kortix-starter:ar-chaser');
+    expect(agent.governance).toEqual({
+      connectors: ['stripe'],
+      secrets: ['STRIPE_KEY'],
+      skills: ['invoice-math'],
+      kortix_permissions: [],
+    });
+    expect(agent.governanceYaml).toContain('ar-chaser:');
+    expect(agent.governanceYaml).toContain('- invoice-math');
+    // The grant is the agent's capability manifest on the card too.
+    expect(detail!.capabilities.connectors).toContain('stripe');
+    expect(detail!.capabilities.secrets).toContain('STRIPE_KEY');
+  });
+
+  test('non-agent detail has no agent block', async () => {
+    const detail = await getCatalogItemDetail('kortix-starter:invoice-math');
+    expect(detail).not.toBeNull();
+    expect(detail!.agent).toBeUndefined();
   });
 });
 
@@ -162,7 +205,7 @@ describe('pageCatalogItems', () => {
     expect(pdf.partOfProject).toEqual({ id: 'kortix-projects:starter', title: 'Kortix Starter' });
   });
 
-  test('surfaces skills and projects as browseable; hides agents/commands/bundles/support types', () => {
+  test('surfaces skills, agents, and projects as browseable; hides commands/bundles/support types', () => {
     const items = [
       item({ id: 'k:skill', name: 'a-skill', type: 'registry:skill' }),
       item({ id: 'k:project', name: 'a-project', type: 'registry:project' }),
@@ -174,8 +217,8 @@ describe('pageCatalogItems', () => {
     ];
     const result = pageCatalogItems(items, {});
     const visible = new Set(result.items.map((it) => it.type));
-    expect(visible).toEqual(new Set(['registry:skill', 'registry:project']));
-    expect(result.total).toBe(2);
+    expect(visible).toEqual(new Set(['registry:skill', 'registry:agent', 'registry:project']));
+    expect(result.total).toBe(3);
   });
 
   test('offset past the end returns empty items, hasMore false, and a correct total', () => {
